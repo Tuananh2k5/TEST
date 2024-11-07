@@ -39,7 +39,7 @@ public class Login extends javax.swing.JFrame {
     public void Connect() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection("jdbc:mysql://localhost/Library", "root", "");
+            con = DriverManager.getConnection("jdbc:mysql://localhost/" + Database.DB_Name,Database.DB_UserName,Database.DB_Password);
         } catch (ClassNotFoundException | SQLException ex) {
             Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -47,19 +47,19 @@ public class Login extends javax.swing.JFrame {
 
     public void Account_Load() {
         try {
-            pst = con.prepareStatement("Select UserName from Account where Role = \"admin\"");
+            pst = con.prepareStatement("Select AccountName from Accounts where Role = \"admin\"");
             rs = pst.executeQuery();
             while (rs.next()) {
-                AdminNames.add(rs.getString("UserName"));
+                AdminNames.add(rs.getString("AccountName"));
             }
         } catch (SQLException ex) {
             Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
         }
         try {
-            pst = con.prepareStatement("Select UserName from Account where Role = \"user\"");
+            pst = con.prepareStatement("Select AccountName from Accounts where Role = \"user\"");
             rs = pst.executeQuery();
             while (rs.next()) {
-                UserNames.add(rs.getString("UserName"));
+                UserNames.add(rs.getString("AccountName"));
             }
         } catch (SQLException ex) {
             Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
@@ -327,24 +327,24 @@ public class Login extends javax.swing.JFrame {
 
     private void login_buttonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_login_buttonMouseClicked
         // TODO add your handling code here:
-        String UserName = txtusername.getText();
+        String Name = txtusername.getText();
         String PassWord = txtpassword.getText();
-        if (!UserNames.contains(UserName) && !AdminNames.contains(UserName)) {
+        if (!UserNames.contains(Name) && !AdminNames.contains(Name)) {
             JOptionPane.showMessageDialog(this, "Username or Password is not correct");
             return;
         }
         try {
-            pst = con.prepareStatement("Select * from Account Where UserName = \"" + UserName + "\"");
+            pst = con.prepareStatement("Select * from Accounts Where AccountName = \"" + Name + "\"");
             rs = pst.executeQuery();
             rs.next();
             if (!PassWord.equals(rs.getString("PassWord"))) {
                 JOptionPane.showMessageDialog(this, "Username or Password is not correct");
                 return;
             }
-            if (UserNames.contains(UserName)) {
-                new UserMain(this, UserName, PassWord).setVisible(true);
+            if (UserNames.contains(Name)) {
+                new UserMain(this, Name, PassWord).setVisible(true);
             } else {
-                new AdminDashboard(UserName).setVisible(true);
+                new AdminDashboard(Name).setVisible(true);
             }
             this.dispose();
         } catch (SQLException ex) {

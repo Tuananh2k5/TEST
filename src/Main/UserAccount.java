@@ -49,7 +49,7 @@ public class UserAccount extends javax.swing.JFrame {
     public void Connect(){
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-                    con = DriverManager.getConnection("jdbc:mysql://localhost/Library","root","");
+                    con = DriverManager.getConnection("jdbc:mysql://localhost/LibraryDB","root","");
         } catch (ClassNotFoundException | SQLException ex) {
             Logger.getLogger(UserAccount.class.getName()).log(Level.SEVERE, null, ex);
         }

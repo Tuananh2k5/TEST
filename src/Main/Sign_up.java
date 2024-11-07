@@ -34,7 +34,7 @@ public class Sign_up extends javax.swing.JFrame {
     public void Connect() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection("jdbc:mysql://localhost/Library", "root", "");
+            con = DriverManager.getConnection("jdbc:mysql://localhost/" + Database.DB_Name,Database.DB_UserName,Database.DB_Password);
         } catch (ClassNotFoundException | SQLException ex) {
             Logger.getLogger(Sign_up.class.getName()).log(Level.SEVERE, null, ex);
         }

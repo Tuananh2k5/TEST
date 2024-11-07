@@ -2,12 +2,14 @@ DROP DATABASE IF EXISTS LibraryDB;
 CREATE DATABASE IF NOT EXISTS LibraryDB;
 USE LibraryDB;
 CREATE TABLE Accounts (
-   UserName varchar(255) primary key,
+   AccountName varchar(255) primary key,
    PassWord varchar(255) not null,
    Email varchar(255) not null,
    ContactNumber varchar(255) not null,
    Role varchar(255) not null
 );
+INSERT INTO accounts (AccountName,PassWord,Email,ContactNumber,Role) values ("admin","admin","admin@gmail.com","123","Admin");
+INSERT INTO accounts (AccountName,PassWord,Email,ContactNumber,Role) values ("user","user","admin@gmail.com","321","User");
 CREATE TABLE Categories (
    Category_ID int(11) auto_increment primary key,
    Name varchar(255) not null,
@@ -19,4 +21,26 @@ CREATE TABLE Authors (
    Name varchar(255) not null,
    City varchar(255) not null,
    Book_count varchar(255) not null
+);
+CREATE TABLE Publishers (
+   Publisher_ID int(11) auto_increment primary key,
+   Name varchar(255) not null,
+   City varchar(255) not null,
+   Book_count varchar(255) not null
+);
+CREATE TABLE Books (
+   Book_ID int(11) auto_increment primary key,
+   Name varchar(255) not null,
+   Category_ID int(11) not null,
+   Author_ID int(11) not null,
+   Publisher_ID int(11) not null,
+   Quantity int(11) not null
+);
+CREATE TABLE IssueBooks (
+   Issue_ID int(11) auto_increment primary key,
+   Book_ID int(11) not null,
+   User_ID int(11) not null,
+   IssueDate date not null,
+   DueDate date not null,
+   Status varchar(255) not null
 );
