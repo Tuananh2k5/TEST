@@ -1,0 +1,22 @@
+DROP DATABASE IF EXISTS LibraryDB;
+CREATE DATABASE IF NOT EXISTS LibraryDB;
+USE LibraryDB;
+CREATE TABLE Accounts (
+   UserName varchar(255) primary key,
+   PassWord varchar(255) not null,
+   Email varchar(255) not null,
+   ContactNumber varchar(255) not null,
+   Role varchar(255) not null
+);
+CREATE TABLE Categories (
+   Category_ID int(11) auto_increment primary key,
+   Name varchar(255) not null,
+   Status varchar(255) not null,
+   Book_count int(11) not null
+);
+CREATE TABLE Authors (
+   Author_ID int(11) auto_increment primary key,
+   Name varchar(255) not null,
+   City varchar(255) not null,
+   Book_count varchar(255) not null
+);

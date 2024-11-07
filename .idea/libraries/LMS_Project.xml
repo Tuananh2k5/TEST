@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="LMS_Project">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/dist/LMS_Project.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
