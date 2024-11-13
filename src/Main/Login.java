@@ -23,29 +23,30 @@ public class Login extends javax.swing.JFrame {
 
     private List<String> UserNames = new ArrayList<String>();
     private List<String> AdminNames = new ArrayList<String>();
-
+    
     /**
      * Creates new form Login
      */
     public Login() {
+        this.con = Database.getInstance().getConnection();
         initComponents();
-        Connect();
+//        Connect();
         Account_Load();
     }
     Connection con;
     PreparedStatement pst;
     ResultSet rs;
 
-    public void Connect() {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection("jdbc:mysql://localhost/" + Database.DB_Name,Database.DB_UserName,Database.DB_Password);
-        } catch (ClassNotFoundException | SQLException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+//    public void Connect() {
+//        try {
+//            Class.forName("com.mysql.cj.jdbc.Driver");
+//            con = DriverManager.getConnection("jdbc:mysql://localhost/" + Database.DB_Name,Database.DB_UserName,Database.DB_Password);
+//        } catch (ClassNotFoundException | SQLException ex) {
+//            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//    }
 
-    public void Account_Load() {
+    private void Account_Load() {
         try {
             pst = con.prepareStatement("Select AccountName from Accounts where Role = \"admin\"");
             rs = pst.executeQuery();

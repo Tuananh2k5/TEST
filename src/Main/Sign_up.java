@@ -23,22 +23,23 @@ public class Sign_up extends javax.swing.JFrame {
      * Creates new form Login
      */
     public Sign_up() {
+        this.con = Database.getInstance().getConnection();
         initComponents();
-        Connect();
+//        Connect();
         error_text.setText("");
     }
     Connection con;
     PreparedStatement pst;
     ResultSet rs;
 
-    public void Connect() {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            con = DriverManager.getConnection("jdbc:mysql://localhost/" + Database.DB_Name,Database.DB_UserName,Database.DB_Password);
-        } catch (ClassNotFoundException | SQLException ex) {
-            Logger.getLogger(Sign_up.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+//    public void Connect() {
+//        try {
+//            Class.forName("com.mysql.cj.jdbc.Driver");
+//            con = DriverManager.getConnection("jdbc:mysql://localhost/" + Database.DB_Name,Database.DB_UserName,Database.DB_Password);
+//        } catch (ClassNotFoundException | SQLException ex) {
+//            Logger.getLogger(Sign_up.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//    }
 
     private static boolean isValidNumberString(String str) {
         if (str == null || str.isEmpty()) {

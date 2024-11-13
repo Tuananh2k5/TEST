@@ -25,7 +25,7 @@ CREATE TABLE Authors (
 CREATE TABLE Publishers (
    Publisher_ID int(11) auto_increment primary key,
    Name varchar(255) not null,
-   City varchar(255) not null,
+   Address varchar(255) not null,
    Book_count varchar(255) not null
 );
 CREATE TABLE Books (
@@ -34,7 +34,10 @@ CREATE TABLE Books (
    Category_ID int(11) not null,
    Author_ID int(11) not null,
    Publisher_ID int(11) not null,
-   Quantity int(11) not null
+   Quantity int(11) not null,
+   FOREIGN KEY (Author_ID) REFERENCES AUTHORS(Author_ID) ON UPDATE CASCADE ON DELETE CASCADE,
+   FOREIGN KEY (Category_ID) REFERENCES Categories(Category_ID) ON UPDATE CASCADE ON DELETE CASCADE,
+   FOREIGN KEY (Publisher_ID) REFERENCES Publishers(Publisher_ID) ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE TABLE IssueBooks (
    Issue_ID int(11) auto_increment primary key,

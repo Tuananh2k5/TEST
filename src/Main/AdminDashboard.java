@@ -6,12 +6,10 @@ package Main;
 
 import java.awt.Color;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -21,15 +19,20 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author Admin
  */
+
 public class AdminDashboard extends javax.swing.JFrame {
     private String AccountName;
+    private static final int NO_SELECTION = -1;
     class Table_status {
         public int Previous_category_selected;
         public int Previous_author_selected;
-
+        public int Previous_publisher_selected;
+        public int Previous_book_selected;
         public Table_status() {
-            this.Previous_category_selected = -1;
-            this.Previous_author_selected = -1;
+            this.Previous_category_selected = NO_SELECTION;
+            this.Previous_author_selected = NO_SELECTION;
+            this.Previous_publisher_selected = NO_SELECTION;
+            this.Previous_book_selected = NO_SELECTION;
         }
         
     }
@@ -38,43 +41,34 @@ public class AdminDashboard extends javax.swing.JFrame {
      * Creates new form AdminDashboard
      */
     public AdminDashboard(String AccountName) {
+        this.con = Database.getInstance().getConnection();
         initComponents();
         this.AccountName = AccountName;
-        Connect();
+//        Connect();
         AdminGreeting_Load();
+        Home_page_Load();
     }
     Connection con;
     PreparedStatement pst;
     ResultSet rs;
-    public void Connect(){
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-                    con = DriverManager.getConnection("jdbc:mysql://localhost/" + Database.DB_Name,Database.DB_UserName,Database.DB_Password);
-        } catch (ClassNotFoundException | SQLException ex) {
-            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }   
+//    public void Connect(){
+//        try {
+//            Class.forName("com.mysql.cj.jdbc.Driver");
+//                    con = DriverManager.getConnection("jdbc:mysql://localhost/" + Database.DB_Name,Database.DB_UserName,Database.DB_Password);
+//        } catch (ClassNotFoundException | SQLException ex) {
+//            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//    }   
 //Load AdminGreeting in 
     private void AdminGreeting_Load() {
 //        Recent_Issue_Load();
         admin_name.setText("Welcome, Admin " + AccountName);
-        try {
-            pst = con.prepareStatement("SELECT count(*) FROM Books UNION ALL SELECT count(*) FROM Accounts WHERE Role = \"User\" UNION ALL SELECT count(*) FROM Issuebooks");
-            rs = pst.executeQuery();
-            rs.next();
-            BookNumber.setText("    " + rs.getString(1));
-            rs.next();
-            UserNumber.setText("    " + rs.getString(1));
-            rs.next();
-            IssueNumber.setText("    " + rs.getString(1));
-        } catch (SQLException ex) {
-            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
-        }  
     }
 //---------------------------------------------------------------------------------------------------------------------------------------------
 //Initialize Home_page    
     private void Home_page_Load() {
-        Recent_Issue_Load();
+//        Recent_Issue_Load();
+        Combination_Load();
     }
 //Load recent_issue_table in Home_page
     private void Recent_Issue_Load() {
@@ -94,6 +88,21 @@ public class AdminDashboard extends javax.swing.JFrame {
             Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+//Load combination Book_User_IssueBook in Home_page
+    private void Combination_Load(){
+        try {
+            pst = con.prepareStatement("SELECT count(*) FROM Books UNION ALL SELECT count(*) FROM Accounts WHERE Role = \"User\" UNION ALL SELECT count(*) FROM Issuebooks");
+            rs = pst.executeQuery();
+            rs.next();
+            BookNumber.setText("    " + rs.getString(1));
+            rs.next();
+            UserNumber.setText("    " + rs.getString(1));
+            rs.next();
+            IssueNumber.setText("    " + rs.getString(1));
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }  
+    }
 //---------------------------------------------------------------------------------------------------------------------------------------------
 //Turn off all button
     private void TurnOffButtons() {
@@ -101,6 +110,9 @@ public class AdminDashboard extends javax.swing.JFrame {
         home_page_button.setBackground(color);
         manage_categories_button.setBackground(color);
         manage_authors_button.setBackground(color);
+        manage_publishers_button.setBackground(color);
+        manage_issues_button.setBackground(color);
+        manage_books_button.setBackground(color);
         logout_button.setBackground(color);
     }
 //---------------------------------------------------------------------------------------------------------------------------------------------
@@ -156,34 +168,34 @@ public class AdminDashboard extends javax.swing.JFrame {
             category_id.removeAllItems();
              
             while(rs.next()){
-                category_id.addItem(rs.getString("Category_ID"));
+                category_id.addItem(new CategoryItem(rs.getInt("Category_ID"),rs.getString("Name")));
             }
         } catch (SQLException ex) {
             Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
         }           
     } 
 //---------------------------------------------------------------------------------------------------------------------------------------------
-//Initialize category_panel
+//Initialize author_panel
     private void Author_panelLoad() {
         Author_TableLoad();
         Author_IDLoad();
         Author_buttonLoad();
         Author_TextandComboboxLoad();
     }   
-//Load button_status when initialize category_panel
+//Load button_status when initialize author_panel
     private void Author_buttonLoad() {
         author_addButton.setEnabled(true);
         author_updateButton.setEnabled(false);
         author_deleteButton.setEnabled(false);
     }
-//Load text and combobox status when initialize category_panel
+//Load text and combobox status when initialize author_panel
     private void Author_TextandComboboxLoad() {
         author_id.setSelectedIndex(-1);
         author_name.setText("");
         author_city.setText("");
         author_book_count.setText("");
     }
-// Load category_table in category_panel
+// Load author_table in author_panel
     private void Author_TableLoad(){
             try {
                 pst = con.prepareStatement("select * from Authors");
@@ -207,7 +219,7 @@ public class AdminDashboard extends javax.swing.JFrame {
                 Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
             }       
         }
-//Load category id into category_id combobox
+//Load author id into author_id combobox
     private void Author_IDLoad(){
         try {
             pst = con.prepareStatement("Select * from Authors");
@@ -215,13 +227,236 @@ public class AdminDashboard extends javax.swing.JFrame {
             author_id.removeAllItems();
              
             while(rs.next()){
-                author_id.addItem(rs.getString("Author_ID"));
+                author_id.addItem(new AuthorItem(rs.getInt("Author_ID"),rs.getString("Name")));
             }
         } catch (SQLException ex) {
             Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
         }           
     } 
     
+//---------------------------------------------------------------------------------------------------------------------------------------------
+//Initialize AdminDashboard
+    private void Publisher_panelLoad() {
+        Publisher_TableLoad();
+        Publisher_IDLoad();
+        Publisher_buttonLoad();
+        Publisher_TextandComboboxLoad();
+    }       
+//Load button_status when initialize AdminDashboard
+    private void Publisher_buttonLoad() {
+        publisher_addButton.setEnabled(true);
+        publisher_updateButton.setEnabled(false);
+        publisher_deleteButton.setEnabled(false);
+    }
+//Load text and combobox status when initialize AdminDashboard
+    private void Publisher_TextandComboboxLoad() {
+        publisher_id.setSelectedIndex(-1);
+        publisher_name.setText("");
+        publisher_address.setText("");
+        publisher_book_count.setText("");
+    }
+// Load publisher_table in AdminDashboard
+    private void Publisher_TableLoad(){
+            try {
+                pst = con.prepareStatement("select * from Publishers");
+                rs = pst.executeQuery();
+
+                ResultSetMetaData rsd = rs.getMetaData();
+                int columns = rsd.getColumnCount();
+
+                DefaultTableModel model = (DefaultTableModel)publisher_table.getModel();
+                model.setRowCount(0);
+
+                while(rs.next()){
+                    Object[] obj = new Object[columns];
+                    for(int i = 1 ; i <= columns ; i++){
+                        obj[i-1] = rs.getString(i);
+                    }
+                    model.addRow(obj);
+                }
+
+            } catch (SQLException ex) {
+                Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+            }       
+        }
+//Load publisher id into publisher_id combobox
+    private void Publisher_IDLoad(){
+        try {
+            pst = con.prepareStatement("Select * from Publishers");
+            rs = pst.executeQuery();
+            publisher_id.removeAllItems();
+             
+            while(rs.next()){
+                publisher_id.addItem(new PublisherItem(rs.getInt("Publisher_ID"),rs.getString("Name")));
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }           
+    } 
+//---------------------------------------------------------------------------------------------------------------------------------------------    
+//MySQL Method in Issue_panel
+    private void Issue_SQLQuery() {
+        String cmd = "Select * from IssueBooks Where 1 ";
+        String sort_condition = "Order By Issue_ID ";
+        String search_condition_book = searchby_book.getText();
+        String search_condition_user = searchby_user.getText();
+        if(Sorted.getSelectedItem().toString().equals("Newest to Oldest")) {
+            sort_condition += "ASC ";
+        } else {
+            sort_condition += "DESC ";
+        }
+        cmd += sort_condition;
+        try {
+            pst = con.prepareStatement(cmd);
+            rs = pst.executeQuery();
+            int columns = rs.getMetaData().getColumnCount();
+            DefaultTableModel model = (DefaultTableModel)issue_table.getModel();
+            model.setRowCount(0);
+            while(rs.next()) {
+                Object[] obj = new Object[columns];
+                for(int i = 0 ; i < columns ; i++) {
+                    obj[i] = rs.getString(i+1);
+                }
+                model.addRow(obj);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+//---------------------------------------------------------------------------------------------------------------------------------------------    
+////Initialize Book_panel
+    private void Book_panelLoad() {
+        Book_TableLoad();
+        Book_IDLoad();
+        Book_buttonLoad();
+        Book_TextandComboboxLoad();
+    }       
+//Load button_status when initialize AdminDashboard
+    private void Book_buttonLoad() {
+        book_addButton.setEnabled(true);
+        book_updateButton.setEnabled(false);
+        book_deleteButton.setEnabled(false);
+    }
+//Load text and combobox status when initialize AdminDashboard
+    private void Book_TextandComboboxLoad() {
+        book_id.setSelectedIndex(-1);
+        book_name.setText("");
+        book_quantity.setText("");
+        book_category.setSelectedIndex(-1);
+        book_author.setSelectedIndex(-1);
+        book_publisher.setSelectedIndex(-1);
+    }
+// Load publisher_table in AdminDashboard
+    private void Book_TableLoad(){
+            try {
+                pst = con.prepareStatement("SELECT b.Book_ID, b.Name,c.Category_ID ,c.Name as Category,a.Author_ID,a.Name as Author,p.Publisher_ID,p.Name as Publisher, b.Quantity FROM `books`b "
+                        + "JOIN categories c ON b.Category_ID = c.Category_ID "
+                        + "JOIN authors a ON b.Author_ID = a.Author_ID "
+                        + "JOIN publishers p ON b.Publisher_ID = p.Publisher_ID;");
+                rs = pst.executeQuery();
+                int columns = 6;
+                DefaultTableModel model = (DefaultTableModel)book_table.getModel();
+                model.setRowCount(0);
+                while(rs.next()){
+                    Object[] obj = new Object[columns];
+                    obj[0] = rs.getString("Book_ID");
+                    obj[1] = rs.getString("Name");
+                    obj[2] = new CategoryItem(rs.getInt("Category_ID"), rs.getString("Category"));
+                    obj[3] = new AuthorItem(rs.getInt("Author_ID"), rs.getString("Author"));
+                    obj[4] = new PublisherItem(rs.getInt("Publisher_ID"), rs.getString("Publisher"));
+                    obj[5] = rs.getString("Quantity");
+                    model.addRow(obj);
+                }
+
+            } catch (SQLException ex) {
+                Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+            }       
+        }
+//Load publisher id into publisher_id combobox
+    private void Book_IDLoad(){
+        try {
+            book_id.removeAllItems();        
+            book_category.removeAllItems();
+            book_author.removeAllItems();
+            book_publisher.removeAllItems();
+            //Load book_id
+            pst = con.prepareStatement("Select Book_ID from Books b");
+            rs = pst.executeQuery();
+            while(rs.next()){
+                book_id.addItem(rs.getString("Book_ID"));
+            }
+            //Load book_category
+            pst = con.prepareStatement("SELECT Category_ID, Name FROM categories");
+            rs = pst.executeQuery();
+            while(rs.next()){
+                book_category.addItem(new CategoryItem(rs.getInt("Category_ID"), rs.getString("Name")));
+            }
+            //Load book_author
+            pst = con.prepareStatement("SELECT Author_ID, Name FROM authors");
+            rs = pst.executeQuery();
+            while(rs.next()){
+                book_author.addItem(new AuthorItem(rs.getInt("Author_ID"), rs.getString("Name")));
+            }
+            //Load book_publisher
+            pst = con.prepareStatement("SELECT Publisher_ID, Name FROM publishers");
+            rs = pst.executeQuery();
+            while(rs.next()){
+                book_publisher.addItem(new PublisherItem(rs.getInt("Publisher_ID"),rs.getString("Name")));
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }           
+    } 
+//---------------------------------------------------------------------------------------------------------------------------------------------     
+//Update,Delete Book_count for categories, authors and publishers
+    private void UpdateBookCountForCategories(int Category_ID) {
+        try {
+            pst = con.prepareStatement("Update Categories SET Book_count = Book_count + 1 Where Category_ID = " + Category_ID);
+            pst.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    private void UpdateBookCountForAuthors(int Author_ID) {
+        try {
+            pst = con.prepareStatement("Update Authors SET Book_count = Book_count + 1 Where Author_ID = " + Author_ID);
+            pst.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    private void UpdateBookCountForPublishers(int Publisher_ID) {
+        try {
+            pst = con.prepareStatement("Update Publishers SET Book_count = Book_count + 1 Where Publisher_ID = " + Publisher_ID);
+            pst.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }  
+    private void DeleteBookCountForCategories(int Category_ID) {
+        try {
+            pst = con.prepareStatement("Update Categories SET Book_count = Book_count - 1 Where Category_ID = " + Category_ID);
+            pst.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    private void DeleteBookCountForAuthors(int Author_ID) {
+        try {
+            pst = con.prepareStatement("Update Authors SET Book_count = Book_count - 1 Where Author_ID = " + Author_ID);
+            pst.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    private void DeleteBookCountForPublishers(int Publisher_ID) {
+        try {
+            pst = con.prepareStatement("Update Publishers SET Book_count = Book_count - 1 Where Publisher_ID = " + Publisher_ID);
+            pst.executeUpdate();
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }     
 //---------------------------------------------------------------------------------------------------------------------------------------------
     /**
      * This method is called from within the constructor to initialize the form.
@@ -247,6 +482,9 @@ public class AdminDashboard extends javax.swing.JFrame {
         home_page_button = new javax.swing.JButton();
         logout_button = new javax.swing.JButton();
         manage_authors_button = new javax.swing.JButton();
+        manage_publishers_button = new javax.swing.JButton();
+        manage_issues_button = new javax.swing.JButton();
+        manage_books_button = new javax.swing.JButton();
         Parent_panel = new javax.swing.JPanel();
         home_page_panel = new javax.swing.JPanel();
         JPanel = new javax.swing.JPanel();
@@ -269,7 +507,7 @@ public class AdminDashboard extends javax.swing.JFrame {
         jScrollPane3 = new javax.swing.JScrollPane();
         category_table = new rojeru_san.complementos.RSTableMetro();
         jPanel6 = new javax.swing.JPanel();
-        category_id = new javax.swing.JComboBox<>();
+        category_id = new javax.swing.JComboBox();
         category_name = new javax.swing.JTextField();
         category_status = new javax.swing.JComboBox<>();
         category_book_count = new javax.swing.JTextField();
@@ -286,7 +524,7 @@ public class AdminDashboard extends javax.swing.JFrame {
         jScrollPane4 = new javax.swing.JScrollPane();
         author_table = new rojeru_san.complementos.RSTableMetro();
         jPanel7 = new javax.swing.JPanel();
-        author_id = new javax.swing.JComboBox<>();
+        author_id = new javax.swing.JComboBox();
         author_book_count = new javax.swing.JTextField();
         author_addButton = new javax.swing.JButton();
         author_updateButton = new javax.swing.JButton();
@@ -298,6 +536,55 @@ public class AdminDashboard extends javax.swing.JFrame {
         jLabel26 = new javax.swing.JLabel();
         author_name = new javax.swing.JTextField();
         author_city = new javax.swing.JTextField();
+        jLabel27 = new javax.swing.JLabel();
+        publisher_panel = new javax.swing.JPanel();
+        jPanel12 = new javax.swing.JPanel();
+        publisher_id = new javax.swing.JComboBox();
+        publisher_book_count = new javax.swing.JTextField();
+        publisher_addButton = new javax.swing.JButton();
+        publisher_updateButton = new javax.swing.JButton();
+        publisher_deleteButton = new javax.swing.JButton();
+        jLabel32 = new javax.swing.JLabel();
+        jLabel33 = new javax.swing.JLabel();
+        jLabel34 = new javax.swing.JLabel();
+        jLabel35 = new javax.swing.JLabel();
+        jLabel36 = new javax.swing.JLabel();
+        publisher_name = new javax.swing.JTextField();
+        publisher_address = new javax.swing.JTextField();
+        jScrollPane6 = new javax.swing.JScrollPane();
+        publisher_table = new rojeru_san.complementos.RSTableMetro();
+        jLabel28 = new javax.swing.JLabel();
+        issue_panel = new javax.swing.JPanel();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        issue_table = new rojeru_san.complementos.RSTableMetro();
+        Sorted = new javax.swing.JComboBox<>();
+        jLabel3 = new javax.swing.JLabel();
+        searchby_book = new javax.swing.JTextField();
+        jLabel4 = new javax.swing.JLabel();
+        search_button = new javax.swing.JButton();
+        jLabel8 = new javax.swing.JLabel();
+        searchby_user = new javax.swing.JTextField();
+        jLabel9 = new javax.swing.JLabel();
+        book_panel = new javax.swing.JPanel();
+        jScrollPane7 = new javax.swing.JScrollPane();
+        book_table = new rojeru_san.complementos.RSTableMetro();
+        jPanel4 = new javax.swing.JPanel();
+        book_id = new javax.swing.JComboBox();
+        book_name = new javax.swing.JTextField();
+        jLabel11 = new javax.swing.JLabel();
+        book_author = new javax.swing.JComboBox<>();
+        book_publisher = new javax.swing.JComboBox<>();
+        book_category = new javax.swing.JComboBox<>();
+        jLabel10 = new javax.swing.JLabel();
+        book_quantity = new javax.swing.JTextField();
+        jLabel12 = new javax.swing.JLabel();
+        jLabel13 = new javax.swing.JLabel();
+        jLabel29 = new javax.swing.JLabel();
+        jLabel30 = new javax.swing.JLabel();
+        jLabel31 = new javax.swing.JLabel();
+        book_addButton = new javax.swing.JButton();
+        book_updateButton = new javax.swing.JButton();
+        book_deleteButton = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setUndecorated(true);
@@ -432,6 +719,42 @@ public class AdminDashboard extends javax.swing.JFrame {
             }
         });
 
+        manage_publishers_button.setBackground(new java.awt.Color(51, 51, 51));
+        manage_publishers_button.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
+        manage_publishers_button.setForeground(new java.awt.Color(255, 255, 255));
+        manage_publishers_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
+        manage_publishers_button.setText("Manage Publishers");
+        manage_publishers_button.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        manage_publishers_button.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                manage_publishers_buttonActionPerformed(evt);
+            }
+        });
+
+        manage_issues_button.setBackground(new java.awt.Color(51, 51, 51));
+        manage_issues_button.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
+        manage_issues_button.setForeground(new java.awt.Color(255, 255, 255));
+        manage_issues_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
+        manage_issues_button.setText("Manage Issues");
+        manage_issues_button.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        manage_issues_button.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                manage_issues_buttonActionPerformed(evt);
+            }
+        });
+
+        manage_books_button.setBackground(new java.awt.Color(51, 51, 51));
+        manage_books_button.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
+        manage_books_button.setForeground(new java.awt.Color(255, 255, 255));
+        manage_books_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
+        manage_books_button.setText("Manage Books");
+        manage_books_button.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        manage_books_button.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                manage_books_buttonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
@@ -442,6 +765,9 @@ public class AdminDashboard extends javax.swing.JFrame {
             .addComponent(home_page_button, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)
             .addComponent(logout_button, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)
             .addComponent(manage_authors_button, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)
+            .addComponent(manage_publishers_button, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)
+            .addComponent(manage_issues_button, javax.swing.GroupLayout.DEFAULT_SIZE, 237, Short.MAX_VALUE)
+            .addComponent(manage_books_button, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -455,8 +781,14 @@ public class AdminDashboard extends javax.swing.JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(manage_authors_button, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
+                .addComponent(manage_publishers_button, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(manage_issues_button, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(manage_books_button, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
                 .addComponent(logout_button, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 184, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 100, Short.MAX_VALUE)
                 .addComponent(Logout_panel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(116, 116, 116))
         );
@@ -656,6 +988,7 @@ public class AdminDashboard extends javax.swing.JFrame {
         category_panel.setBackground(new java.awt.Color(255, 255, 255));
         category_panel.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
+        category_table.setBackground(new java.awt.Color(153, 255, 153));
         category_table.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null},
@@ -691,6 +1024,11 @@ public class AdminDashboard extends javax.swing.JFrame {
             public Class getColumnClass(int columnIndex) {
                 return types [columnIndex];
             }
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                // Return false to make all cells non-editable
+                return false; // You can customize this to return true for specific columns if needed
+            }
         });
         category_table.setColorFilasBackgound2(new java.awt.Color(153, 255, 153));
         category_table.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -700,7 +1038,7 @@ public class AdminDashboard extends javax.swing.JFrame {
         });
         jScrollPane3.setViewportView(category_table);
 
-        category_panel.add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(340, 180, 580, 470));
+        category_panel.add(jScrollPane3, new org.netbeans.lib.awtextra.AbsoluteConstraints(340, 280, 580, 460));
 
         jPanel6.setBackground(new java.awt.Color(255, 51, 102));
 
@@ -801,10 +1139,10 @@ public class AdminDashboard extends javax.swing.JFrame {
                     .addComponent(category_addButton)
                     .addComponent(category_updateButton)
                     .addComponent(category_deleteButton))
-                .addContainerGap(177, Short.MAX_VALUE))
+                .addContainerGap(267, Short.MAX_VALUE))
         );
 
-        category_panel.add(jPanel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 340, 650));
+        category_panel.add(jPanel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, 340, 740));
 
         jLabel14.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
         jLabel14.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -814,8 +1152,28 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         Parent_panel.add(category_panel, "card3");
 
+        author_panel.setBackground(new java.awt.Color(255, 255, 255));
+
+        author_table.setBackground(new java.awt.Color(102, 255, 102));
         author_table.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
                 {null, null, null, null},
                 {null, null, null, null},
                 {null, null, null, null},
@@ -831,6 +1189,11 @@ public class AdminDashboard extends javax.swing.JFrame {
 
             public Class getColumnClass(int columnIndex) {
                 return types [columnIndex];
+            }
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                // Return false to make all cells non-editable
+                return false; // You can customize this to return true for specific columns if needed
             }
         });
         author_table.setColorFilasBackgound2(new java.awt.Color(204, 255, 102));
@@ -939,8 +1302,13 @@ public class AdminDashboard extends javax.swing.JFrame {
                     .addComponent(author_addButton)
                     .addComponent(author_updateButton)
                     .addComponent(author_deleteButton))
-                .addContainerGap(177, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
+        jLabel27.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
+        jLabel27.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel27.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Book_Shelf_50px.png"))); // NOI18N
+        jLabel27.setText("Author");
 
         javax.swing.GroupLayout author_panelLayout = new javax.swing.GroupLayout(author_panel);
         author_panel.setLayout(author_panelLayout);
@@ -948,20 +1316,512 @@ public class AdminDashboard extends javax.swing.JFrame {
             author_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, author_panelLayout.createSequentialGroup()
                 .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, 0)
-                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 576, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(author_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 576, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(author_panelLayout.createSequentialGroup()
+                        .addGap(160, 160, 160)
+                        .addComponent(jLabel27, javax.swing.GroupLayout.PREFERRED_SIZE, 207, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         author_panelLayout.setVerticalGroup(
             author_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(author_panelLayout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
-                .addGroup(author_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel7, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jScrollPane4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(78, 78, 78)
+                .addComponent(jLabel27)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 203, Short.MAX_VALUE)
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         Parent_panel.add(author_panel, "card4");
+
+        publisher_panel.setBackground(new java.awt.Color(255, 255, 255));
+
+        jPanel12.setBackground(new java.awt.Color(255, 51, 102));
+
+        publisher_id.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                publisher_idActionPerformed(evt);
+            }
+        });
+
+        publisher_addButton.setText("ADD");
+        publisher_addButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                publisher_addButtonActionPerformed(evt);
+            }
+        });
+
+        publisher_updateButton.setText("UPDATE");
+        publisher_updateButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                publisher_updateButtonActionPerformed(evt);
+            }
+        });
+
+        publisher_deleteButton.setText("DELETE");
+        publisher_deleteButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                publisher_deleteButtonActionPerformed(evt);
+            }
+        });
+
+        jLabel32.setText("Publisher_ID");
+
+        jLabel33.setText("Name");
+
+        jLabel34.setText("Address");
+
+        jLabel35.setText("Book_count");
+
+        jLabel36.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
+        jLabel36.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel36.setText("Info");
+
+        javax.swing.GroupLayout jPanel12Layout = new javax.swing.GroupLayout(jPanel12);
+        jPanel12.setLayout(jPanel12Layout);
+        jPanel12Layout.setHorizontalGroup(
+            jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel12Layout.createSequentialGroup()
+                .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel12Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel32, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(publisher_addButton)
+                            .addComponent(jLabel33, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel34, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel35, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(18, 18, 18)
+                        .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(jPanel12Layout.createSequentialGroup()
+                                .addComponent(publisher_updateButton)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(publisher_deleteButton)
+                                .addGap(9, 9, 9))
+                            .addComponent(publisher_id, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(publisher_book_count)
+                            .addComponent(publisher_name)
+                            .addComponent(publisher_address, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(jPanel12Layout.createSequentialGroup()
+                        .addGap(96, 96, 96)
+                        .addComponent(jLabel36, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(41, Short.MAX_VALUE))
+        );
+        jPanel12Layout.setVerticalGroup(
+            jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel12Layout.createSequentialGroup()
+                .addGap(87, 87, 87)
+                .addComponent(jLabel36, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(80, 80, 80)
+                .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel32, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(publisher_id))
+                .addGap(33, 33, 33)
+                .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel33)
+                    .addComponent(publisher_name, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(34, 34, 34)
+                .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel34)
+                    .addComponent(publisher_address, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(26, 26, 26)
+                .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(publisher_book_count, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel35))
+                .addGap(58, 58, 58)
+                .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(publisher_addButton)
+                    .addComponent(publisher_updateButton)
+                    .addComponent(publisher_deleteButton))
+                .addContainerGap(260, Short.MAX_VALUE))
+        );
+
+        publisher_table.setBackground(new java.awt.Color(255, 102, 102));
+        publisher_table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Publisher_ID", "Name", "Address", "Book_count"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                // Return false to make all cells non-editable
+                return false; // You can customize this to return true for specific columns if needed
+            }
+        });
+        publisher_table.setColorFilasBackgound2(new java.awt.Color(204, 255, 102));
+        publisher_table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        publisher_table.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                publisher_tableMouseClicked(evt);
+            }
+        });
+        jScrollPane6.setViewportView(publisher_table);
+
+        jLabel28.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
+        jLabel28.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel28.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Book_Shelf_50px.png"))); // NOI18N
+        jLabel28.setText("Publisher");
+
+        javax.swing.GroupLayout publisher_panelLayout = new javax.swing.GroupLayout(publisher_panel);
+        publisher_panel.setLayout(publisher_panelLayout);
+        publisher_panelLayout.setHorizontalGroup(
+            publisher_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(publisher_panelLayout.createSequentialGroup()
+                .addComponent(jPanel12, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(publisher_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(publisher_panelLayout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 576, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(publisher_panelLayout.createSequentialGroup()
+                        .addGap(152, 152, 152)
+                        .addComponent(jLabel28, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+        );
+        publisher_panelLayout.setVerticalGroup(
+            publisher_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jPanel12, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(publisher_panelLayout.createSequentialGroup()
+                .addGap(87, 87, 87)
+                .addComponent(jLabel28)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+
+        Parent_panel.add(publisher_panel, "card5");
+
+        issue_panel.setBackground(new java.awt.Color(255, 255, 255));
+
+        issue_table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null}
+            },
+            new String [] {
+                "Issue_ID", "Book", "User", "IssueDate", "ScheduledDue", "ActualDue", "Status"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        issue_table.setColorFilasBackgound2(new java.awt.Color(153, 255, 153));
+        jScrollPane5.setViewportView(issue_table);
+        if (issue_table.getColumnModel().getColumnCount() > 0) {
+            issue_table.getColumnModel().getColumn(0).setPreferredWidth(30);
+        }
+
+        Sorted.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Newest to Oldest", "Oldest to Newest" }));
+        Sorted.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SortedActionPerformed(evt);
+            }
+        });
+
+        jLabel3.setText("SORT BY");
+
+        searchby_book.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchby_bookActionPerformed(evt);
+            }
+        });
+
+        jLabel4.setText("Search By");
+
+        search_button.setText("search");
+        search_button.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                search_buttonActionPerformed(evt);
+            }
+        });
+
+        jLabel8.setText("Book");
+
+        searchby_user.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchby_userActionPerformed(evt);
+            }
+        });
+
+        jLabel9.setText("User");
+
+        javax.swing.GroupLayout issue_panelLayout = new javax.swing.GroupLayout(issue_panel);
+        issue_panel.setLayout(issue_panelLayout);
+        issue_panelLayout.setHorizontalGroup(
+            issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(issue_panelLayout.createSequentialGroup()
+                .addGap(28, 28, 28)
+                .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, 46, Short.MAX_VALUE)
+                    .addComponent(jLabel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(32, 32, 32)
+                .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(issue_panelLayout.createSequentialGroup()
+                        .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(Sorted, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(issue_panelLayout.createSequentialGroup()
+                        .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 89, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(issue_panelLayout.createSequentialGroup()
+                                .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addComponent(searchby_user, javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(searchby_book, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 146, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(search_button)))
+                        .addGap(0, 0, Short.MAX_VALUE))))
+            .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 915, Short.MAX_VALUE)
+        );
+        issue_panelLayout.setVerticalGroup(
+            issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, issue_panelLayout.createSequentialGroup()
+                .addGap(56, 56, 56)
+                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(Sorted, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(20, 20, 20)
+                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(searchby_book, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(search_button)
+                    .addComponent(jLabel8))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(searchby_user, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel9))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 152, Short.MAX_VALUE)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 364, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+
+        Parent_panel.add(issue_panel, "card6");
+
+        book_table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
+            },
+            new String [] {
+                "Book_ID", "Name", "Category", "Author", "Publisher", "Quantity"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.String.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        book_table.setColorFilasBackgound2(new java.awt.Color(204, 255, 51));
+        book_table.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                book_tableMouseClicked(evt);
+            }
+        });
+        jScrollPane7.setViewportView(book_table);
+
+        jPanel4.setBackground(new java.awt.Color(255, 51, 102));
+
+        jLabel11.setText("Name");
+
+        jLabel10.setText("ID");
+
+        jLabel12.setText("Quantity");
+
+        jLabel13.setText("Category");
+
+        jLabel29.setText("Author");
+
+        jLabel30.setText("Publisher");
+
+        jLabel31.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
+        jLabel31.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        jLabel31.setText("Info");
+
+        book_addButton.setText("ADD");
+        book_addButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                book_addButtonActionPerformed(evt);
+            }
+        });
+
+        book_updateButton.setText("UPDATE");
+        book_updateButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                book_updateButtonActionPerformed(evt);
+            }
+        });
+
+        book_deleteButton.setText("DELETE");
+        book_deleteButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                book_deleteButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
+        jPanel4.setLayout(jPanel4Layout);
+        jPanel4Layout.setHorizontalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addGap(158, 158, 158)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addComponent(jLabel31, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(9, 9, 9))
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jLabel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel12, javax.swing.GroupLayout.DEFAULT_SIZE, 54, Short.MAX_VALUE))
+                        .addGap(42, 42, 42)
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(book_quantity)
+                                    .addComponent(book_id, 0, 149, Short.MAX_VALUE)
+                                    .addComponent(book_name))
+                                .addGap(42, 42, 42)
+                                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel29, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel30)))
+                            .addGroup(jPanel4Layout.createSequentialGroup()
+                                .addComponent(book_addButton, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 67, Short.MAX_VALUE)
+                                .addComponent(book_updateButton, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                .addGap(21, 21, 21)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(book_author, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(book_category, javax.swing.GroupLayout.PREFERRED_SIZE, 144, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(book_publisher, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGap(31, 31, 31)
+                        .addComponent(book_deleteButton, javax.swing.GroupLayout.PREFERRED_SIZE, 99, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(233, Short.MAX_VALUE))
+        );
+        jPanel4Layout.setVerticalGroup(
+            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel4Layout.createSequentialGroup()
+                .addGap(47, 47, 47)
+                .addComponent(jLabel31, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(43, 43, 43)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(book_name, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(book_category, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel11)
+                    .addComponent(jLabel13))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel4Layout.createSequentialGroup()
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(book_id, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(book_author, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel10))
+                        .addGap(18, 18, 18)
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(book_publisher, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(book_quantity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel12)
+                            .addComponent(jLabel30)))
+                    .addComponent(jLabel29))
+                .addGap(31, 31, 31)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(book_addButton)
+                    .addComponent(book_updateButton)
+                    .addComponent(book_deleteButton))
+                .addContainerGap(98, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout book_panelLayout = new javax.swing.GroupLayout(book_panel);
+        book_panel.setLayout(book_panelLayout);
+        book_panelLayout.setHorizontalGroup(
+            book_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane7)
+            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+        );
+        book_panelLayout.setVerticalGroup(
+            book_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, book_panelLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(0, 0, 0)
+                .addComponent(jScrollPane7, javax.swing.GroupLayout.PREFERRED_SIZE, 333, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
+        Parent_panel.add(book_panel, "card7");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -978,8 +1838,8 @@ public class AdminDashboard extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(Parent_panel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(layout.createSequentialGroup()
+                    .addComponent(Parent_panel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
         );
@@ -1059,9 +1919,9 @@ public class AdminDashboard extends javax.swing.JFrame {
         // TODO add your handling code here:
         DefaultTableModel model = (DefaultTableModel)category_table.getModel();
         int clickedRow = category_table.rowAtPoint(evt.getPoint());
-        if(clickedRow == -1) return;
+        if(clickedRow == NO_SELECTION) return;
         if(clickedRow == table_status.Previous_category_selected) {
-            table_status.Previous_category_selected = -1;
+            table_status.Previous_category_selected = NO_SELECTION;
             category_table.clearSelection();
             category_addButton.setEnabled(true);
             category_updateButton.setEnabled(false);
@@ -1181,7 +2041,7 @@ public class AdminDashboard extends javax.swing.JFrame {
         DefaultTableModel model = (DefaultTableModel)author_table.getModel();
         int selectIndex = author_table.getSelectedRow();
         String id = model.getValueAt(selectIndex, 0).toString();        
-        String name = admin_name.getText();
+        String name = author_name.getText();
         String city = author_city.getText();
         String book_count = author_book_count.getText();
         try {
@@ -1238,9 +2098,9 @@ public class AdminDashboard extends javax.swing.JFrame {
         // TODO add your handling code here:
         DefaultTableModel model = (DefaultTableModel)author_table.getModel();
         int clickedRow = author_table.rowAtPoint(evt.getPoint());
-        if(clickedRow == -1) return;
+        if(clickedRow == NO_SELECTION) return;
         if(clickedRow == table_status.Previous_author_selected) {
-            table_status.Previous_author_selected = -1;
+            table_status.Previous_author_selected = NO_SELECTION;
             author_table.clearSelection();
             author_addButton.setEnabled(true);
             author_updateButton.setEnabled(false);
@@ -1257,6 +2117,322 @@ public class AdminDashboard extends javax.swing.JFrame {
         author_updateButton.setEnabled(true);
         author_deleteButton.setEnabled(true);
     }//GEN-LAST:event_author_tableMouseClicked
+
+    private void manage_publishers_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manage_publishers_buttonActionPerformed
+        // TODO add your handling code here:
+        Parent_panel.removeAll();
+        Parent_panel.add(publisher_panel);
+        Parent_panel.repaint();
+        Parent_panel.revalidate();
+        Publisher_panelLoad();
+        TurnOffButtons();
+        manage_publishers_button.setBackground(new Color(255,0,51));
+    }//GEN-LAST:event_manage_publishers_buttonActionPerformed
+
+    private void publisher_idActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_publisher_idActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_publisher_idActionPerformed
+
+    private void publisher_addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_publisher_addButtonActionPerformed
+        // TODO add your handling code here:
+        String name = publisher_name.getText();
+        String address = publisher_address.getText();
+        String book_count = "0";
+        try {
+            pst = con.prepareStatement("Insert into Publishers(Name,Address,Book_count)values(?,?,?)");
+            pst.setString(1, name);
+            pst.setString(2, address);
+            pst.setString(3, book_count);
+            int k = pst.executeUpdate();            
+            if(k == 1){
+                JOptionPane.showMessageDialog(this, "Data created");
+                publisher_id.setSelectedIndex(-1);
+                publisher_name.setText("");
+                publisher_address.setText("");
+                publisher_book_count.setText("");
+                Publisher_TableLoad();
+                Publisher_IDLoad();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error");
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_publisher_addButtonActionPerformed
+
+    private void publisher_updateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_publisher_updateButtonActionPerformed
+        // TODO add your handling code here:
+        DefaultTableModel model = (DefaultTableModel)publisher_table.getModel();
+        int selectIndex = publisher_table.getSelectedRow();
+        String id = model.getValueAt(selectIndex, 0).toString();        
+        String name = publisher_name.getText();
+        String address = publisher_address.getText();
+        String book_count = publisher_book_count.getText();
+        try {
+            pst = con.prepareStatement("Update Publishers set Name = ?, Address = ?, Book_count = ? where Publisher_ID = ?");
+            pst.setString(1, name);
+            pst.setString(2, address);
+            pst.setString(3, book_count);
+            pst.setString(4, id);
+            int k = pst.executeUpdate();            
+            if(k == 1){
+                JOptionPane.showMessageDialog(this, "Data updated");
+                publisher_name.setText("");
+                publisher_address.setText("");
+                publisher_id.setSelectedIndex(-1);
+                publisher_book_count.setText("");
+                Publisher_TableLoad();
+                publisher_addButton.setEnabled(true);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error");
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_publisher_updateButtonActionPerformed
+
+    private void publisher_deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_publisher_deleteButtonActionPerformed
+        // TODO add your handling code here:
+        DefaultTableModel model = (DefaultTableModel)publisher_table.getModel();
+        int selectIndex = publisher_table.getSelectedRow();
+        String id = model.getValueAt(selectIndex, 0).toString();
+        try {
+            pst = con.prepareStatement("Delete from Publishers Where Publisher_ID = ?");
+            pst.setString(1, id);
+            int k = pst.executeUpdate();
+            
+            if(k == 1){
+                JOptionPane.showMessageDialog(this, "Data deleted");
+                publisher_name.setText("");
+                publisher_id.setSelectedIndex(-1);
+                publisher_book_count.setText("");
+                publisher_address.setText("");
+                Publisher_TableLoad();
+                Publisher_IDLoad();
+                publisher_addButton.setEnabled(true);
+            } else {
+                JOptionPane.showMessageDialog(this, "Error");
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }  
+    }//GEN-LAST:event_publisher_deleteButtonActionPerformed
+
+    private void publisher_tableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_publisher_tableMouseClicked
+        // TODO add your handling code here:
+        DefaultTableModel model = (DefaultTableModel)publisher_table.getModel();
+        int clickedRow = publisher_table.rowAtPoint(evt.getPoint());
+        if(clickedRow == NO_SELECTION) return;
+        if(clickedRow == table_status.Previous_publisher_selected) {
+            table_status.Previous_publisher_selected = NO_SELECTION;
+            publisher_table.clearSelection();
+            publisher_addButton.setEnabled(true);
+            publisher_updateButton.setEnabled(false);
+            publisher_deleteButton.setEnabled(false);
+            return;
+        }
+        table_status.Previous_publisher_selected = clickedRow;
+        int selectIndex = publisher_table.getSelectedRow();
+        publisher_id.setSelectedItem(model.getValueAt(selectIndex,0).toString());
+        publisher_name.setText(model.getValueAt(selectIndex,1).toString());
+        publisher_address.setText(model.getValueAt(selectIndex,2).toString());   
+        publisher_book_count.setText(model.getValueAt(selectIndex,3).toString());
+        publisher_addButton.setEnabled(false);
+        publisher_updateButton.setEnabled(true);
+        publisher_deleteButton.setEnabled(true);
+    }//GEN-LAST:event_publisher_tableMouseClicked
+
+    private void manage_issues_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manage_issues_buttonActionPerformed
+        // TODO add your handling code here:
+        Parent_panel.removeAll();
+        Parent_panel.add(issue_panel);
+        Parent_panel.repaint();
+        Parent_panel.revalidate();
+        Issue_SQLQuery();
+        TurnOffButtons();
+        manage_issues_button.setBackground(new Color(255,0,51));
+    }//GEN-LAST:event_manage_issues_buttonActionPerformed
+
+    private void SortedActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SortedActionPerformed
+        // TODO add your handling code here:
+        Issue_SQLQuery();
+    }//GEN-LAST:event_SortedActionPerformed
+
+    private void searchby_bookActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchby_bookActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_searchby_bookActionPerformed
+
+    private void search_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_search_buttonActionPerformed
+        // TODO add your handling code here:
+        Issue_SQLQuery();
+    }//GEN-LAST:event_search_buttonActionPerformed
+
+    private void searchby_userActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchby_userActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_searchby_userActionPerformed
+
+    private void manage_books_buttonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_manage_books_buttonActionPerformed
+        // TODO add your handling code here:
+        Parent_panel.removeAll();
+        Parent_panel.add(book_panel);
+        Parent_panel.repaint();
+        Parent_panel.revalidate();
+        Book_panelLoad();
+        TurnOffButtons();
+        manage_books_button.setBackground(new Color(255,0,51));
+    }//GEN-LAST:event_manage_books_buttonActionPerformed
+
+    private void book_tableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_book_tableMouseClicked
+        // TODO add your handling code here:
+        DefaultTableModel model = (DefaultTableModel)book_table.getModel();
+        int clickedRow = book_table.rowAtPoint(evt.getPoint());
+        if(clickedRow == NO_SELECTION) return;
+        if(clickedRow == table_status.Previous_book_selected) {
+            table_status.Previous_book_selected = NO_SELECTION;
+            book_table.clearSelection();
+            book_addButton.setEnabled(true);
+            book_updateButton.setEnabled(false);
+            book_deleteButton.setEnabled(false);
+            return;
+        }
+        table_status.Previous_book_selected = clickedRow;
+        int selectIndex = book_table.getSelectedRow();
+        book_id.setSelectedItem(model.getValueAt(selectIndex,0).toString());
+        book_name.setText(model.getValueAt(selectIndex,1).toString());
+        book_category.setSelectedItem((CategoryItem)model.getValueAt(selectIndex,2));   
+        book_author.setSelectedItem((AuthorItem)model.getValueAt(selectIndex,3)); 
+        book_publisher.setSelectedItem((PublisherItem)model.getValueAt(selectIndex,4));
+        book_quantity.setText(model.getValueAt(selectIndex,5).toString());
+        book_addButton.setEnabled(false);
+        book_updateButton.setEnabled(true);
+        book_deleteButton.setEnabled(true);
+    }//GEN-LAST:event_book_tableMouseClicked
+
+    private void book_addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_book_addButtonActionPerformed
+        // TODO add your handling code here:
+        String name = book_name.getText();
+        String quantity = book_quantity.getText();
+        if ("".equals(quantity) || "".equals(name) || book_category.getSelectedIndex() == -1 || book_author.getSelectedIndex() == -1 || book_publisher.getSelectedIndex() == -1) {
+            JOptionPane.showMessageDialog(this, "Missing information");
+            return;
+        }  
+        try {
+            if(Integer.parseInt(quantity) < 0) {
+                throw new NumberFormatException();
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Quantity is invalid");
+            return;
+        }
+        int category = ((CategoryItem)book_category.getSelectedItem()).getId();
+        int author = ((AuthorItem)book_author.getSelectedItem()).getId();
+        int publisher = ((PublisherItem)book_publisher.getSelectedItem()).getId();       
+        try {
+//            pst = con.prepareStatement("Select Category_ID from Categories Where Name = \"" + category + "\"");
+//            rs = pst.executeQuery();
+//            rs.next();
+//            category = rs.getString(1);
+            UpdateBookCountForCategories(category);
+
+//            pst = con.prepareStatement("Select Author_ID from Authors Where Name = \"" + author + "\"");
+//            rs = pst.executeQuery();
+//            rs.next();
+//            author = rs.getString(1);
+            UpdateBookCountForAuthors(author);
+
+//            pst = con.prepareStatement("Select Publisher_ID from Publishers Where Name = \"" + publisher + "\"");
+//            rs = pst.executeQuery();
+//            rs.next();
+//            publisher = rs.getString(1);
+            UpdateBookCountForPublishers(publisher);
+
+            pst = con.prepareStatement("INSERT INTO Books (Name,Category_ID,Author_ID,Publisher_ID,Quantity) VALUES (?,?,?,?,?)");
+            pst.setString(1, name);
+            pst.setInt(2, category);
+            pst.setInt(3, author);
+            pst.setInt(4, publisher);
+            pst.setString(5, quantity);
+            int k = pst.executeUpdate();            
+            if(k == 1){
+                Book_panelLoad();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error");
+            }
+            } catch (SQLException ex) {
+                Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+            }
+    }//GEN-LAST:event_book_addButtonActionPerformed
+
+    private void book_updateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_book_updateButtonActionPerformed
+        // TODO add your handling code here:
+        DefaultTableModel model = (DefaultTableModel)book_table.getModel();
+        int selectIndex = book_table.getSelectedRow();
+        String id = model.getValueAt(selectIndex, 0).toString();        
+        String name = book_name.getText();
+        int category = ((CategoryItem)book_category.getSelectedItem()).getId();
+        int author = ((AuthorItem)book_author.getSelectedItem()).getId();
+        int publisher = ((PublisherItem)book_publisher.getSelectedItem()).getId();
+        String quantity = book_quantity.getText();
+        try {
+//            pst = con.prepareStatement("Select Category_ID from Categories Where Name = \"" + category + "\"");
+//            rs = pst.executeQuery();
+//            rs.next();
+//            category = rs.getString(1);
+//            
+//            pst = con.prepareStatement("Select Author_ID from Authors Where Name = \"" + author + "\"");
+//            rs = pst.executeQuery();
+//            rs.next();
+//            author = rs.getString(1);
+//
+//            pst = con.prepareStatement("Select Publisher_ID from Publishers Where Name = \"" + publisher + "\"");
+//            rs = pst.executeQuery();
+//            rs.next();
+//            publisher = rs.getString(1);
+            
+            pst = con.prepareStatement("Update Books set Name = ?, Category_ID = ?, Author_ID = ?, Publisher_ID = ?, Quantity = ? where Book_ID = ?");
+            pst.setString(1, name);
+            pst.setInt(2, category);
+            pst.setInt(3, author);
+            pst.setInt(4, publisher);
+            pst.setString(5, quantity);
+            pst.setString(6, id);
+            int k = pst.executeUpdate();            
+            if(k == 1){
+                JOptionPane.showMessageDialog(this, "Data updated");
+                Book_panelLoad();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error");
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_book_updateButtonActionPerformed
+
+    private void book_deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_book_deleteButtonActionPerformed
+        // TODO add your handling code here:
+        DefaultTableModel model = (DefaultTableModel)book_table.getModel();
+        int selectIndex = book_table.getSelectedRow();
+        String id = model.getValueAt(selectIndex, 0).toString();
+        int category = ((CategoryItem)book_category.getSelectedItem()).getId();
+        int author = ((AuthorItem)book_author.getSelectedItem()).getId();
+        int publisher = ((PublisherItem)book_publisher.getSelectedItem()).getId();
+        try {
+            pst = con.prepareStatement("Delete from Books Where Book_ID = ?");
+            pst.setString(1, id);
+            int k = pst.executeUpdate();
+            if(k == 1){
+                JOptionPane.showMessageDialog(this, "Data deleted");
+                DeleteBookCountForCategories(category);
+                DeleteBookCountForAuthors(author);
+                DeleteBookCountForPublishers(publisher);
+                Book_panelLoad();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error");
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }  
+    }//GEN-LAST:event_book_deleteButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1284,6 +2460,9 @@ public class AdminDashboard extends javax.swing.JFrame {
             java.util.logging.Logger.getLogger(AdminDashboard.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
@@ -1301,21 +2480,33 @@ public class AdminDashboard extends javax.swing.JFrame {
     private javax.swing.JLabel Jlabel;
     private javax.swing.JPanel Logout_panel;
     private javax.swing.JPanel Parent_panel;
+    private javax.swing.JComboBox<String> Sorted;
     private javax.swing.JLabel UserNumber;
     private javax.swing.JLabel admin_name;
     private javax.swing.JButton author_addButton;
     private javax.swing.JTextField author_book_count;
     private javax.swing.JTextField author_city;
     private javax.swing.JButton author_deleteButton;
-    private javax.swing.JComboBox<String> author_id;
+    private javax.swing.JComboBox author_id;
     private javax.swing.JTextField author_name;
     private javax.swing.JPanel author_panel;
     private rojeru_san.complementos.RSTableMetro author_table;
     private javax.swing.JButton author_updateButton;
+    private javax.swing.JButton book_addButton;
+    private javax.swing.JComboBox<AuthorItem> book_author;
+    private javax.swing.JComboBox<CategoryItem> book_category;
+    private javax.swing.JButton book_deleteButton;
+    private javax.swing.JComboBox book_id;
+    private javax.swing.JTextField book_name;
+    private javax.swing.JPanel book_panel;
+    private javax.swing.JComboBox<PublisherItem> book_publisher;
+    private javax.swing.JTextField book_quantity;
+    private rojeru_san.complementos.RSTableMetro book_table;
+    private javax.swing.JButton book_updateButton;
     private javax.swing.JButton category_addButton;
     private javax.swing.JTextField category_book_count;
     private javax.swing.JButton category_deleteButton;
-    private javax.swing.JComboBox<String> category_id;
+    private javax.swing.JComboBox category_id;
     private javax.swing.JTextField category_name;
     private javax.swing.JPanel category_panel;
     private javax.swing.JComboBox<String> category_status;
@@ -1323,8 +2514,14 @@ public class AdminDashboard extends javax.swing.JFrame {
     private javax.swing.JButton category_updateButton;
     private javax.swing.JButton home_page_button;
     private javax.swing.JPanel home_page_panel;
+    private javax.swing.JPanel issue_panel;
+    private rojeru_san.complementos.RSTableMetro issue_table;
     private javax.swing.JLabel j;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
+    private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel16;
@@ -1339,13 +2536,29 @@ public class AdminDashboard extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel24;
     private javax.swing.JLabel jLabel25;
     private javax.swing.JLabel jLabel26;
+    private javax.swing.JLabel jLabel27;
+    private javax.swing.JLabel jLabel28;
+    private javax.swing.JLabel jLabel29;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel30;
+    private javax.swing.JLabel jLabel31;
+    private javax.swing.JLabel jLabel32;
+    private javax.swing.JLabel jLabel33;
+    private javax.swing.JLabel jLabel34;
+    private javax.swing.JLabel jLabel35;
+    private javax.swing.JLabel jLabel36;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel11;
+    private javax.swing.JPanel jPanel12;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
@@ -1355,10 +2568,28 @@ public class AdminDashboard extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JScrollPane jScrollPane6;
+    private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JButton logout_button;
     private javax.swing.JButton manage_authors_button;
+    private javax.swing.JButton manage_books_button;
     private javax.swing.JButton manage_categories_button;
+    private javax.swing.JButton manage_issues_button;
+    private javax.swing.JButton manage_publishers_button;
+    private javax.swing.JButton publisher_addButton;
+    private javax.swing.JTextField publisher_address;
+    private javax.swing.JTextField publisher_book_count;
+    private javax.swing.JButton publisher_deleteButton;
+    private javax.swing.JComboBox publisher_id;
+    private javax.swing.JTextField publisher_name;
+    private javax.swing.JPanel publisher_panel;
+    private rojeru_san.complementos.RSTableMetro publisher_table;
+    private javax.swing.JButton publisher_updateButton;
     private rojeru_san.complementos.RSTableMetro rSTableMetro2;
     private rojeru_san.complementos.RSTableMetro recent_issue;
+    private javax.swing.JButton search_button;
+    private javax.swing.JTextField searchby_book;
+    private javax.swing.JTextField searchby_user;
     // End of variables declaration//GEN-END:variables
 }
