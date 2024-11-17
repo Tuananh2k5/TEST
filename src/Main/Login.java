@@ -5,7 +5,6 @@
 package Main;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -343,7 +342,7 @@ public class Login extends javax.swing.JFrame {
                 return;
             }
             if (UserNames.contains(Name)) {
-                new UserMain(this, Name, PassWord).setVisible(true);
+                new UserDashboard(Name).setVisible(true);
             } else {
                 new AdminDashboard(Name).setVisible(true);
             }

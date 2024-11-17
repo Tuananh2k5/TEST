@@ -6,7 +6,6 @@ package Main;
 
 import java.math.BigInteger;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -420,14 +419,14 @@ public class Sign_up extends javax.swing.JFrame {
             error_text.setText("Please enter a valid contact number");
         } else {
                 try {
-                    pst = con.prepareStatement("SELECT COUNT(UserName) FROM account WHERE UserName = ?");
+                    pst = con.prepareStatement("SELECT COUNT(AccountName) FROM accounts WHERE AccountName = ?");
                     pst.setString(1, username);
                     rs = pst.executeQuery();
                     rs.next();
                     if(rs.getInt(1) != 0) {
                         error_text.setText("Username already in use");
                     } else {
-                        pst = con.prepareStatement("INSERT INTO account(UserName,PassWord,Email,ContactNumber,Role) VALUES (?,?,?,?,?)");
+                        pst = con.prepareStatement("INSERT INTO accounts(AccountName,PassWord,Email,ContactNumber,Role) VALUES (?,?,?,?,?)");
                         pst.setString(1, username);
                         pst.setString(2, password);
                         pst.setString(3, email);

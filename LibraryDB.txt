@@ -42,8 +42,9 @@ CREATE TABLE Books (
 CREATE TABLE IssueBooks (
    Issue_ID int(11) auto_increment primary key,
    Book_ID int(11) not null,
-   User_ID int(11) not null,
+   UserName varchar(255) not null,
    IssueDate date not null,
    DueDate date not null,
+   ActualDueDate date,
    Status varchar(255) not null
 );
