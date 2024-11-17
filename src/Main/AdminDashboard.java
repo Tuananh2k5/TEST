@@ -629,9 +629,9 @@ public class AdminDashboard extends javax.swing.JFrame {
         searchby_user = new javax.swing.JTextField();
         jLabel9 = new javax.swing.JLabel();
         jLabel37 = new javax.swing.JLabel();
-        searchby_issuedate = new com.toedter.calendar.JDateChooser();
         jLabel8 = new javax.swing.JLabel();
         jButton1 = new javax.swing.JButton();
+        searchby_issuedate = new com.toedter.calendar.JDateChooser();
         book_panel = new javax.swing.JPanel();
         jScrollPane7 = new javax.swing.JScrollPane();
         book_table = new rojeru_san.complementos.RSTableMetro();
@@ -1568,9 +1568,7 @@ public class AdminDashboard extends javax.swing.JFrame {
                         .addGap(152, 152, 152)
                         .addComponent(jLabel28, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap())
-                    .addGroup(publisher_panelLayout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
-                        .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 575, Short.MAX_VALUE))))
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 575, Short.MAX_VALUE)))
         );
         publisher_panelLayout.setVerticalGroup(
             publisher_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1745,16 +1743,13 @@ public class AdminDashboard extends javax.swing.JFrame {
                     .addComponent(jLabel9)
                     .addComponent(search_button))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(issue_panelLayout.createSequentialGroup()
-                        .addComponent(searchby_issuedate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButton1)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 153, Short.MAX_VALUE)
-                        .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 364, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(issue_panelLayout.createSequentialGroup()
-                        .addComponent(jLabel8)
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(searchby_issuedate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
+                .addComponent(jButton1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 154, Short.MAX_VALUE)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 364, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         Parent_panel.add(issue_panel, "card6");
