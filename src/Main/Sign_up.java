@@ -411,9 +411,11 @@ public class Sign_up extends javax.swing.JFrame {
         String password = txtpassword.getText();
         String email = txtemail.getText();
         String contact = txtcontact.getText();
+        int indexFirst = email.indexOf('@');
         if( password.equals("") || username.equals("") || email.equals("") || contact.equals("")) {
             error_text.setText("Missing information");
-        } else if (!email.contains("@gmail.com") && email.matches("^(?![A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$).+")) {
+//        } else if (!email.substring(email.indexOf('@')).equals("@gmail.com") && !Character.isLetter(email.charAt(0)) && email.matches("^(?![A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$).+")) {
+          } else if (indexFirst == -1 || email.substring(indexFirst).equals("@gmail.com") == false || Character.isLetter(email.charAt(0)) == false || email.length() < 10) {
             error_text.setText("Please enter a valid email address");
         } else if(!isValidNumberString(contact)) {  
             error_text.setText("Please enter a valid contact number");

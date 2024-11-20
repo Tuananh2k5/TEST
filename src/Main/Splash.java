@@ -148,14 +148,14 @@ public class Splash extends javax.swing.JFrame {
 
                 if (progress < 100) { // Change to "< 100" to allow reaching 100
                     switch (progress) {
-                        case 10 -> sp.LoadingBar.setText("Turning On Modules...");
-                        case 20 -> sp.LoadingBar.setText("Loading Modules...");
-                        case 50 -> sp.LoadingBar.setText("Connecting to Database...");
+//                        case 10 -> sp.LoadingBar.setText("Turning On Modules...");
+                        case 10 -> sp.LoadingBar.setText("Loading Modules...");
+                        case 30 -> sp.LoadingBar.setText("Connecting to Database...");
                         case 70 -> sp.LoadingBar.setText("Connection Successful");
                         case 80 -> sp.LoadingBar.setText("Launching Application...");
                     }
-
-                    sp.bar.setValue(++progress); // Increment the progress
+                    progress += 5;
+                    sp.bar.setValue(progress); // Increment the progress
                     sp.LoadingValue.setText(progress + "%");
                 } else {
                     timer.stop(); // Stop the timer
