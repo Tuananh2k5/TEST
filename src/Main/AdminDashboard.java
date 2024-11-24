@@ -6,6 +6,7 @@ package Main;
 
 import java.awt.Color;
 import java.awt.event.ItemEvent;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -16,6 +17,10 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import static javax.swing.JOptionPane.ERROR_MESSAGE;
+import static javax.swing.JOptionPane.INFORMATION_MESSAGE;
+import static javax.swing.JOptionPane.QUESTION_MESSAGE;
+import static javax.swing.JOptionPane.WARNING_MESSAGE;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -31,11 +36,13 @@ public class AdminDashboard extends javax.swing.JFrame {
         public int Previous_author_selected;
         public int Previous_publisher_selected;
         public int Previous_book_selected;
+        public int Previous_user_selected;
         public Table_status() {
             this.Previous_category_selected = NO_SELECTION;
             this.Previous_author_selected = NO_SELECTION;
             this.Previous_publisher_selected = NO_SELECTION;
             this.Previous_book_selected = NO_SELECTION;
+            this.Previous_user_selected = NO_SELECTION;
         }        
     }
     Table_status table_status = new Table_status();
@@ -54,6 +61,22 @@ public class AdminDashboard extends javax.swing.JFrame {
     ResultSet rs;
     private void AdminGreeting_Load() {
         admin_name.setText("Welcome, Admin " + AccountName);
+    }
+    private static boolean isValidNumberString(String str) {
+        if (str == null || str.isEmpty()) {
+            return false; 
+        }
+        String regex = "-?\\d+";
+        if (!str.matches(regex)) {
+            return false; 
+        }
+        try {
+            new BigInteger(str); 
+        } catch (NumberFormatException e) {
+            return false; 
+        }
+        return true;
+
     }
 //---------------------------------------------------------------------------------------------------------------------------------------------
 //Initialize Home_page    
@@ -161,7 +184,7 @@ public class AdminDashboard extends javax.swing.JFrame {
     }
 // Load category_table in category_panel
     private void Category_TableLoad(){
-            
+            table_status.Previous_category_selected = NO_SELECTION;
             try {
                 pst = con.prepareStatement("select * from categories");
                 rs = pst.executeQuery();
@@ -202,6 +225,7 @@ public class AdminDashboard extends javax.swing.JFrame {
 //---------------------------------------------------------------------------------------------------------------------------------------------
 //Initialize author_panel
     private void Author_panelLoad() {
+       
         Author_TableLoad();
         Author_IDLoad();
         Author_buttonLoad();
@@ -222,6 +246,7 @@ public class AdminDashboard extends javax.swing.JFrame {
     }
 // Load author_table in author_panel
     private void Author_TableLoad(){
+        table_status.Previous_author_selected = NO_SELECTION;
             try {
                 pst = con.prepareStatement("select * from Authors");
                 rs = pst.executeQuery();
@@ -262,6 +287,7 @@ public class AdminDashboard extends javax.swing.JFrame {
 //---------------------------------------------------------------------------------------------------------------------------------------------
 //Initialize AdminDashboard
     private void Publisher_panelLoad() {
+        
         Publisher_TableLoad();
         Publisher_IDLoad();
         Publisher_buttonLoad();
@@ -282,6 +308,7 @@ public class AdminDashboard extends javax.swing.JFrame {
     }
 // Load publisher_table in AdminDashboard
     private void Publisher_TableLoad(){
+        table_status.Previous_publisher_selected = NO_SELECTION;
         try {
             pst = con.prepareStatement("select * from Publishers");
             rs = pst.executeQuery();
@@ -332,6 +359,7 @@ public class AdminDashboard extends javax.swing.JFrame {
         issue_sorted.setSelectedIndex(0);
     }
     private void Issue_Status_LoadItem(){
+        issue_searchby_status.removeAllItems();
         issue_searchby_status.addItem("----");
         issue_searchby_status.addItem("Issued");
         issue_searchby_status.addItem("Returned");
@@ -339,7 +367,7 @@ public class AdminDashboard extends javax.swing.JFrame {
     }
 //MySQL Method in Issue_panel
     private void Issue_SQLQuery() {
-        String baseQuery = "Select ib.Issue_ID, b.Name, ib.UserName, ib.IssueDate, ib.DueDate, ib.ActualDueDate, ib.Status "
+        String baseQuery = "Select ib.Issue_ID, b.Book_ID, b.Name, ib.UserName, ib.IssueDate, ib.DueDate, ib.ActualDueDate, ib.Status "
                 + "from IssueBooks ib Join Books b On ib.Book_ID = b.Book_ID Where 1=1";
         ArrayList<String> conditions = new ArrayList<>();
         ArrayList<Object> parameters = new ArrayList<>();
@@ -408,6 +436,7 @@ public class AdminDashboard extends javax.swing.JFrame {
 ////Initialize Book_panel
     private void Book_panelLoad() {
 //        book_combobox_check.reset();
+        
         Book_TableLoad();
         Book_ComboboxDataLoad();
         Book_buttonLoad();
@@ -434,13 +463,14 @@ public class AdminDashboard extends javax.swing.JFrame {
         book_author_search.setSelectedIndex(0);
         book_publisher_search.setSelectedIndex(0);        
     }
-// Load publisher_table in AdminDashboard
+// Load publisher_table in Book_panel
     private void Book_TableLoad(){
+            table_status.Previous_book_selected = NO_SELECTION;
             try {
                 pst = con.prepareStatement("SELECT b.Book_ID, b.Name,c.Category_ID ,c.Name as Category,a.Author_ID,a.Name as Author,p.Publisher_ID,p.Name as Publisher, b.Quantity FROM `books`b "
                         + "JOIN categories c ON b.Category_ID = c.Category_ID "
                         + "JOIN authors a ON b.Author_ID = a.Author_ID "
-                        + "JOIN publishers p ON b.Publisher_ID = p.Publisher_ID");
+                        + "JOIN publishers p ON b.Publisher_ID = p.Publisher_ID Order By b.Book_ID ASC");
                 rs = pst.executeQuery();
                 int columns = 6;
                 DefaultTableModel model = (DefaultTableModel)book_table.getModel();
@@ -470,7 +500,6 @@ public class AdminDashboard extends javax.swing.JFrame {
             book_category_search.removeAllItems();
             book_author_search.removeAllItems();
             book_publisher_search.removeAllItems();            
-            //Load book_id
             pst = con.prepareStatement("Select Book_ID from Books b");
             book_id_search.addItem("All");
 //            book_combobox_check.book_id_check = true;
@@ -705,6 +734,68 @@ public class AdminDashboard extends javax.swing.JFrame {
     }
     
 //---------------------------------------------------------------------------------------------------------------------------------------------    
+//Initialize User_panel
+    private void User_panelLoad(){
+        User_TableLoad();
+        User_buttonLoad();
+        User_TextandComboboxLoad();
+    }
+
+private void User_TableLoad(){
+            table_status.Previous_user_selected = NO_SELECTION;
+            try {
+                pst = con.prepareStatement("SELECT AccountName, Email, ContactNumber FROM accounts WHERE Role = \"user\"");
+                rs = pst.executeQuery();
+                int columns = 3;
+                DefaultTableModel model = (DefaultTableModel)user_table.getModel();
+                model.setRowCount(0);
+                while(rs.next()){
+                    Object[] obj = new Object[columns];
+                    for(int i = 1 ; i <= columns ; i++){
+                        obj[i-1] = rs.getString(i);
+                    }
+                    model.addRow(obj);
+                }
+
+            } catch (SQLException ex) {
+                Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+            }       
+        }    
+//Load button_status when initialize User_panel
+    private void User_buttonLoad() {
+        user_updateButton.setEnabled(false);
+        user_deleteButton.setEnabled(false);
+    }
+//Load text and combobox status when initialize User_panel
+    private void User_TextandComboboxLoad() {
+        username_search.setText("");
+        user_name.setText("");
+        user_password.setText("");
+        user_email.setText("");
+        user_contact.setText("");
+    }   
+//Load history_issue_book
+    private void History_issueLoad(String username) {
+        try {
+            PreparedStatement ps = con.prepareStatement("SELECT ib.Issue_ID, b.Name, ib.Status FROM issuebooks ib "
+                    + "JOIN accounts a ON ib.UserName = a.AccountName JOIN books b ON ib.Book_ID = b.Book_ID WHERE a.AccountName = ?");
+            ps.setString(1, username);
+            ResultSet r = ps.executeQuery();
+            int columns = 3;
+            DefaultTableModel model = (DefaultTableModel)history_user_table.getModel();
+            model.setRowCount(0);
+                while(r.next()){
+                    Object[] obj = new Object[columns];
+                    for(int i = 1 ; i <= columns ; i++){
+                        obj[i-1] = r.getString(i);
+                    }
+                    model.addRow(obj);
+                }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+ //---------------------------------------------------------------------------------------------------------------------------------------------    
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -852,6 +943,26 @@ public class AdminDashboard extends javax.swing.JFrame {
         jLabel70 = new javax.swing.JLabel();
         user_panel = new javax.swing.JPanel();
         jPanel10 = new javax.swing.JPanel();
+        jScrollPane4 = new javax.swing.JScrollPane();
+        user_table = new rojeru_san.complementos.RSTableMetro();
+        jPanel17 = new javax.swing.JPanel();
+        user_name = new javax.swing.JTextField();
+        jScrollPane6 = new javax.swing.JScrollPane();
+        history_user_table = new rojeru_san.complementos.RSTableMetro();
+        jLabel72 = new javax.swing.JLabel();
+        jLabel73 = new javax.swing.JLabel();
+        jLabel74 = new javax.swing.JLabel();
+        user_password = new javax.swing.JTextField();
+        user_email = new javax.swing.JTextField();
+        jLabel75 = new javax.swing.JLabel();
+        user_contact = new javax.swing.JTextField();
+        jLabel76 = new javax.swing.JLabel();
+        user_updateButton = new javax.swing.JButton();
+        user_deleteButton = new javax.swing.JButton();
+        username_search = new app.bolivia.swing.JCTextField();
+        jLabel71 = new javax.swing.JLabel();
+        user_searchButton = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
         editprofile_panel = new javax.swing.JPanel();
         jPanel13 = new javax.swing.JPanel();
         jPanel14 = new javax.swing.JPanel();
@@ -947,9 +1058,9 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         jPanel5.setBackground(new java.awt.Color(51, 51, 51));
 
-        jLabel7.setText("Feature");
         jLabel7.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
         jLabel7.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel7.setText("Feature");
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -969,11 +1080,11 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         Logout_panel.setBackground(new java.awt.Color(51, 51, 51));
 
-        logout_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
-        logout_button.setText("Logout");
         logout_button.setBackground(new java.awt.Color(51, 51, 51));
         logout_button.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
         logout_button.setForeground(new java.awt.Color(255, 255, 255));
+        logout_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
+        logout_button.setText("Logout");
         logout_button.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         logout_button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -995,11 +1106,11 @@ public class AdminDashboard extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        manage_categories_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Sell_26px.png"))); // NOI18N
-        manage_categories_button.setText("Manage Categories");
         manage_categories_button.setBackground(new java.awt.Color(51, 51, 51));
         manage_categories_button.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
         manage_categories_button.setForeground(new java.awt.Color(255, 255, 255));
+        manage_categories_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Sell_26px.png"))); // NOI18N
+        manage_categories_button.setText("Manage Categories");
         manage_categories_button.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         manage_categories_button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1007,11 +1118,11 @@ public class AdminDashboard extends javax.swing.JFrame {
             }
         });
 
-        home_page_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/home_24px.png"))); // NOI18N
-        home_page_button.setText("Home Page");
         home_page_button.setBackground(new java.awt.Color(255, 0, 51));
         home_page_button.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
         home_page_button.setForeground(new java.awt.Color(255, 255, 255));
+        home_page_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/home_24px.png"))); // NOI18N
+        home_page_button.setText("Home Page");
         home_page_button.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         home_page_button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1019,11 +1130,11 @@ public class AdminDashboard extends javax.swing.JFrame {
             }
         });
 
-        manage_authors_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
-        manage_authors_button.setText("Manage Authors");
         manage_authors_button.setBackground(new java.awt.Color(51, 51, 51));
         manage_authors_button.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
         manage_authors_button.setForeground(new java.awt.Color(255, 255, 255));
+        manage_authors_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
+        manage_authors_button.setText("Manage Authors");
         manage_authors_button.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         manage_authors_button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1031,11 +1142,11 @@ public class AdminDashboard extends javax.swing.JFrame {
             }
         });
 
-        manage_publishers_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
-        manage_publishers_button.setText("Manage Publishers");
         manage_publishers_button.setBackground(new java.awt.Color(51, 51, 51));
         manage_publishers_button.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
         manage_publishers_button.setForeground(new java.awt.Color(255, 255, 255));
+        manage_publishers_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
+        manage_publishers_button.setText("Manage Publishers");
         manage_publishers_button.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         manage_publishers_button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1043,11 +1154,11 @@ public class AdminDashboard extends javax.swing.JFrame {
             }
         });
 
-        manage_issues_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
-        manage_issues_button.setText("Manage Issues");
         manage_issues_button.setBackground(new java.awt.Color(51, 51, 51));
         manage_issues_button.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
         manage_issues_button.setForeground(new java.awt.Color(255, 255, 255));
+        manage_issues_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
+        manage_issues_button.setText("Manage Issues");
         manage_issues_button.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         manage_issues_button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1055,11 +1166,11 @@ public class AdminDashboard extends javax.swing.JFrame {
             }
         });
 
-        manage_books_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
-        manage_books_button.setText("Manage Books");
         manage_books_button.setBackground(new java.awt.Color(51, 51, 51));
         manage_books_button.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
         manage_books_button.setForeground(new java.awt.Color(255, 255, 255));
+        manage_books_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
+        manage_books_button.setText("Manage Books");
         manage_books_button.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         manage_books_button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1067,11 +1178,11 @@ public class AdminDashboard extends javax.swing.JFrame {
             }
         });
 
-        manage_users_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
-        manage_users_button.setText("Manage Users");
         manage_users_button.setBackground(new java.awt.Color(51, 51, 51));
         manage_users_button.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
         manage_users_button.setForeground(new java.awt.Color(255, 255, 255));
+        manage_users_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
+        manage_users_button.setText("Manage Users");
         manage_users_button.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         manage_users_button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1079,11 +1190,11 @@ public class AdminDashboard extends javax.swing.JFrame {
             }
         });
 
-        edit_profile_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
-        edit_profile_button.setText("Edit Profile");
         edit_profile_button.setBackground(new java.awt.Color(51, 51, 51));
         edit_profile_button.setFont(new java.awt.Font("Yu Gothic UI", 1, 14)); // NOI18N
         edit_profile_button.setForeground(new java.awt.Color(255, 255, 255));
+        edit_profile_button.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Exit_26px.png"))); // NOI18N
+        edit_profile_button.setText("Edit Profile");
         edit_profile_button.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         edit_profile_button.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1153,9 +1264,9 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         jPanel8.setBorder(javax.swing.BorderFactory.createMatteBorder(15, 0, 0, 0, new java.awt.Color(255, 0, 51)));
 
-        UserNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_People_50px.png"))); // NOI18N
         UserNumber.setFont(new java.awt.Font("Segoe UI", 0, 28)); // NOI18N
         UserNumber.setForeground(new java.awt.Color(102, 102, 102));
+        UserNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_People_50px.png"))); // NOI18N
 
         javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
         jPanel8.setLayout(jPanel8Layout);
@@ -1174,16 +1285,16 @@ public class AdminDashboard extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        JLabel.setText("No Of Books");
         JLabel.setFont(new java.awt.Font("Segoe UI", 0, 20)); // NOI18N
         JLabel.setForeground(new java.awt.Color(102, 102, 102));
+        JLabel.setText("No Of Books");
 
         jPanel9.setBorder(javax.swing.BorderFactory.createMatteBorder(15, 0, 0, 0, new java.awt.Color(255, 0, 51)));
 
-        BookNumber.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        BookNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Book_Shelf_50px.png"))); // NOI18N
         BookNumber.setFont(new java.awt.Font("Segoe UI", 0, 28)); // NOI18N
         BookNumber.setForeground(new java.awt.Color(102, 102, 102));
+        BookNumber.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        BookNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Book_Shelf_50px.png"))); // NOI18N
 
         javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
         jPanel9.setLayout(jPanel9Layout);
@@ -1204,9 +1315,9 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         jPanel11.setBorder(javax.swing.BorderFactory.createMatteBorder(15, 0, 0, 0, new java.awt.Color(255, 0, 51)));
 
-        IssueNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Sell_50px.png"))); // NOI18N
         IssueNumber.setFont(new java.awt.Font("Segoe UI", 0, 28)); // NOI18N
         IssueNumber.setForeground(new java.awt.Color(102, 102, 102));
+        IssueNumber.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_Sell_50px.png"))); // NOI18N
 
         javax.swing.GroupLayout jPanel11Layout = new javax.swing.GroupLayout(jPanel11);
         jPanel11.setLayout(jPanel11Layout);
@@ -1225,13 +1336,13 @@ public class AdminDashboard extends javax.swing.JFrame {
                 .addContainerGap(20, Short.MAX_VALUE))
         );
 
-        j.setText("Issue Books");
         j.setFont(new java.awt.Font("Segoe UI", 0, 20)); // NOI18N
         j.setForeground(new java.awt.Color(102, 102, 102));
+        j.setText("Issue Books");
 
-        Jlabel.setText("No Of Users");
         Jlabel.setFont(new java.awt.Font("Segoe UI", 0, 20)); // NOI18N
         Jlabel.setForeground(new java.awt.Color(102, 102, 102));
+        Jlabel.setText("No Of Users");
 
         recent_issue.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1258,8 +1369,8 @@ public class AdminDashboard extends javax.swing.JFrame {
         recent_issue.setRowHeight(25);
         jScrollPane1.setViewportView(recent_issue);
 
-        jLabel20.setText("Most-issued Books");
         jLabel20.setFont(new java.awt.Font("Segoe UI", 0, 20)); // NOI18N
+        jLabel20.setText("Most-issued Books");
 
         most_issue_books_table.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1285,8 +1396,8 @@ public class AdminDashboard extends javax.swing.JFrame {
         most_issue_books_table.setRowHeight(25);
         jScrollPane2.setViewportView(most_issue_books_table);
 
-        jLabel21.setText("Recent Issues");
         jLabel21.setFont(new java.awt.Font("Segoe UI", 0, 20)); // NOI18N
+        jLabel21.setText("Recent Issues");
 
         javax.swing.GroupLayout JPanelLayout = new javax.swing.GroupLayout(JPanel);
         JPanel.setLayout(JPanelLayout);
@@ -1398,9 +1509,9 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         jLabel18.setText("Book_count");
 
+        jLabel19.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
         jLabel19.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel19.setText("Info");
-        jLabel19.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
 
         javax.swing.GroupLayout jPanel6Layout = new javax.swing.GroupLayout(jPanel6);
         jPanel6.setLayout(jPanel6Layout);
@@ -1579,9 +1690,9 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         jLabel25.setText("Book_count");
 
+        jLabel26.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
         jLabel26.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel26.setText("Info");
-        jLabel26.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
 
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
@@ -1642,10 +1753,10 @@ public class AdminDashboard extends javax.swing.JFrame {
                 .addContainerGap(270, Short.MAX_VALUE))
         );
 
+        jLabel27.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
         jLabel27.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel27.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/member_50px.png"))); // NOI18N
         jLabel27.setText("Author");
-        jLabel27.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
 
         author_table.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1762,9 +1873,9 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         jLabel35.setText("Book_count");
 
+        jLabel36.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
         jLabel36.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel36.setText("Info");
-        jLabel36.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
 
         javax.swing.GroupLayout jPanel12Layout = new javax.swing.GroupLayout(jPanel12);
         jPanel12.setLayout(jPanel12Layout);
@@ -1825,10 +1936,10 @@ public class AdminDashboard extends javax.swing.JFrame {
                 .addContainerGap(270, Short.MAX_VALUE))
         );
 
+        jLabel28.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
         jLabel28.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel28.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/icons8_People_50px.png"))); // NOI18N
         jLabel28.setText("Publisher");
-        jLabel28.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
 
         publisher_table.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -1900,40 +2011,40 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         issue_table.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null}
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "Issue_ID", "Book", "User", "IssueDate", "Scheduled", "ActualDue", "Status"
+                "ID", "Book_ID", "Book", "User", "IssueDate", "Scheduled", "ActualDue", "Status"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
+                java.lang.String.class, java.lang.Object.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class, java.lang.String.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, false, false
+                false, false, false, false, false, false, false, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -1949,14 +2060,16 @@ public class AdminDashboard extends javax.swing.JFrame {
         jScrollPane5.setViewportView(issue_table);
         if (issue_table.getColumnModel().getColumnCount() > 0) {
             issue_table.getColumnModel().getColumn(0).setResizable(false);
-            issue_table.getColumnModel().getColumn(0).setPreferredWidth(40);
+            issue_table.getColumnModel().getColumn(0).setPreferredWidth(10);
             issue_table.getColumnModel().getColumn(1).setResizable(false);
-            issue_table.getColumnModel().getColumn(1).setPreferredWidth(140);
+            issue_table.getColumnModel().getColumn(1).setPreferredWidth(40);
             issue_table.getColumnModel().getColumn(2).setResizable(false);
+            issue_table.getColumnModel().getColumn(2).setPreferredWidth(120);
             issue_table.getColumnModel().getColumn(3).setResizable(false);
             issue_table.getColumnModel().getColumn(4).setResizable(false);
             issue_table.getColumnModel().getColumn(5).setResizable(false);
             issue_table.getColumnModel().getColumn(6).setResizable(false);
+            issue_table.getColumnModel().getColumn(7).setResizable(false);
         }
 
         issue_sorted.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Newest to Oldest", "Oldest to Newest" }));
@@ -2008,7 +2121,6 @@ public class AdminDashboard extends javax.swing.JFrame {
         issue_panel.setLayout(issue_panelLayout);
         issue_panelLayout.setHorizontalGroup(
             issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 915, Short.MAX_VALUE)
             .addGroup(issue_panelLayout.createSequentialGroup()
                 .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(issue_panelLayout.createSequentialGroup()
@@ -2021,7 +2133,7 @@ public class AdminDashboard extends javax.swing.JFrame {
                                 .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addGroup(issue_panelLayout.createSequentialGroup()
                                         .addComponent(issue_sorted, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 218, Short.MAX_VALUE)
                                         .addComponent(jLabel37, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addComponent(jLabel9, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))))
@@ -2042,7 +2154,10 @@ public class AdminDashboard extends javax.swing.JFrame {
                         .addComponent(issue_searchby_status, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(issue_searchby_issuedate, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(issue_searchby_user, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 146, Short.MAX_VALUE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(219, Short.MAX_VALUE))
+            .addGroup(issue_panelLayout.createSequentialGroup()
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.DEFAULT_SIZE, 909, Short.MAX_VALUE)
+                .addContainerGap())
         );
         issue_panelLayout.setVerticalGroup(
             issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2069,7 +2184,7 @@ public class AdminDashboard extends javax.swing.JFrame {
                     .addComponent(jLabel65)
                     .addComponent(issue_searchby_status, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(issue_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jButton1)
                     .addComponent(search_button))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 131, Short.MAX_VALUE)
@@ -2162,9 +2277,9 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         jLabel12.setText("Quantity");
 
+        jLabel31.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
         jLabel31.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         jLabel31.setText("Info");
-        jLabel31.setFont(new java.awt.Font("Yu Gothic UI", 1, 36)); // NOI18N
 
         book_addButton.setText("ADD");
         book_addButton.addActionListener(new java.awt.event.ActionListener() {
@@ -2354,46 +2469,210 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         Parent_panel.add(book_panel, "card7");
 
+        user_table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null},
+                {null, null, null},
+                {null, null, null},
+                {null, null, null}
+            },
+            new String [] {
+                "UserName", "Email", "Contact"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.String.class, java.lang.String.class, java.lang.String.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, false
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        user_table.setColorFilasBackgound2(new java.awt.Color(153, 255, 153));
+        user_table.getTableHeader().setReorderingAllowed(false);
+        user_table.addAncestorListener(new javax.swing.event.AncestorListener() {
+            public void ancestorAdded(javax.swing.event.AncestorEvent evt) {
+                user_tableAncestorAdded(evt);
+            }
+            public void ancestorMoved(javax.swing.event.AncestorEvent evt) {
+            }
+            public void ancestorRemoved(javax.swing.event.AncestorEvent evt) {
+            }
+        });
+        user_table.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                user_tableMouseClicked(evt);
+            }
+        });
+        jScrollPane4.setViewportView(user_table);
+        if (user_table.getColumnModel().getColumnCount() > 0) {
+            user_table.getColumnModel().getColumn(0).setResizable(false);
+            user_table.getColumnModel().getColumn(1).setResizable(false);
+            user_table.getColumnModel().getColumn(2).setResizable(false);
+        }
+
+        jPanel17.setBackground(new java.awt.Color(51, 102, 255));
+        jPanel17.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        user_name.setDisabledTextColor(new java.awt.Color(0, 0, 0));
+        user_name.setEnabled(false);
+        jPanel17.add(user_name, new org.netbeans.lib.awtextra.AbsoluteConstraints(114, 57, 200, -1));
+
+        history_user_table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Issue_Id", "Book", "Status"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        history_user_table.setEnabled(false);
+        history_user_table.getTableHeader().setReorderingAllowed(false);
+        jScrollPane6.setViewportView(history_user_table);
+        if (history_user_table.getColumnModel().getColumnCount() > 0) {
+            history_user_table.getColumnModel().getColumn(0).setResizable(false);
+            history_user_table.getColumnModel().getColumn(1).setResizable(false);
+            history_user_table.getColumnModel().getColumn(2).setResizable(false);
+        }
+
+        jPanel17.add(jScrollPane6, new org.netbeans.lib.awtextra.AbsoluteConstraints(-7, 390, 400, 357));
+
+        jLabel72.setText("ISSUE HISTORY");
+        jPanel17.add(jLabel72, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 350, 95, 27));
+
+        jLabel73.setText("UserName");
+        jPanel17.add(jLabel73, new org.netbeans.lib.awtextra.AbsoluteConstraints(6, 57, 79, 22));
+
+        jLabel74.setText("PassWord");
+        jPanel17.add(jLabel74, new org.netbeans.lib.awtextra.AbsoluteConstraints(6, 97, 79, 22));
+        jPanel17.add(user_password, new org.netbeans.lib.awtextra.AbsoluteConstraints(114, 97, 200, -1));
+        jPanel17.add(user_email, new org.netbeans.lib.awtextra.AbsoluteConstraints(114, 131, 200, -1));
+
+        jLabel75.setText("Email");
+        jPanel17.add(jLabel75, new org.netbeans.lib.awtextra.AbsoluteConstraints(6, 137, 79, -1));
+        jPanel17.add(user_contact, new org.netbeans.lib.awtextra.AbsoluteConstraints(114, 165, 200, -1));
+
+        jLabel76.setText("Contact");
+        jPanel17.add(jLabel76, new org.netbeans.lib.awtextra.AbsoluteConstraints(6, 168, 90, -1));
+
+        user_updateButton.setText("UPDATE");
+        user_updateButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                user_updateButtonActionPerformed(evt);
+            }
+        });
+        jPanel17.add(user_updateButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 230, 91, 39));
+
+        user_deleteButton.setText("DELETE");
+        user_deleteButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                user_deleteButtonActionPerformed(evt);
+            }
+        });
+        jPanel17.add(user_deleteButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 230, 96, 39));
+
+        username_search.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                username_searchActionPerformed(evt);
+            }
+        });
+
+        jLabel71.setText("UserName");
+
+        user_searchButton.setText("SEARCH");
+        user_searchButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                user_searchButtonActionPerformed(evt);
+            }
+        });
+
+        jButton3.setText("RESET");
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
         jPanel10.setLayout(jPanel10Layout);
         jPanel10Layout.setHorizontalGroup(
             jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 903, Short.MAX_VALUE)
+            .addGroup(jPanel10Layout.createSequentialGroup()
+                .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel10Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(jLabel71, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(username_search, javax.swing.GroupLayout.PREFERRED_SIZE, 221, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(47, 47, 47)
+                        .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(user_searchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 526, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jPanel17, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         jPanel10Layout.setVerticalGroup(
             jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 731, Short.MAX_VALUE)
+            .addGroup(jPanel10Layout.createSequentialGroup()
+                .addGap(31, 31, 31)
+                .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel10Layout.createSequentialGroup()
+                        .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(username_search, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(user_searchButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel10Layout.createSequentialGroup()
+                        .addComponent(jLabel71, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 620, javax.swing.GroupLayout.PREFERRED_SIZE))
+            .addComponent(jPanel17, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout user_panelLayout = new javax.swing.GroupLayout(user_panel);
         user_panel.setLayout(user_panelLayout);
         user_panelLayout.setHorizontalGroup(
             user_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(user_panelLayout.createSequentialGroup()
-                .addContainerGap()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, user_panelLayout.createSequentialGroup()
                 .addComponent(jPanel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addGap(0, 0, 0))
         );
         user_panelLayout.setVerticalGroup(
             user_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, user_panelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jPanel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+            .addGroup(user_panelLayout.createSequentialGroup()
+                .addGap(0, 0, 0)
+                .addComponent(jPanel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         Parent_panel.add(user_panel, "card8");
 
         jPanel14.setBackground(new java.awt.Color(255, 255, 255));
 
-        jLabel38.setText("AccountName ( Can't change ) : ");
         jLabel38.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        jLabel38.setText("AccountName ( Can't change ) : ");
 
-        jLabel39.setText("ContactNumber : ");
         jLabel39.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        jLabel39.setText("ContactNumber : ");
 
-        jLabel40.setText("Email : ");
         jLabel40.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        jLabel40.setText("Email : ");
 
         editprofile_saveButton.setBackground(new java.awt.Color(127, 186, 0));
         editprofile_saveButton.setFont(new java.awt.Font("Segoe UI", 3, 24)); // NOI18N
@@ -2406,8 +2685,8 @@ public class AdminDashboard extends javax.swing.JFrame {
             }
         });
 
-        jLabel41.setText("Edit profile");
         jLabel41.setFont(new java.awt.Font("Segoe UI", 1, 36)); // NOI18N
+        jLabel41.setText("Edit profile");
 
         jLabel42.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/adminIcons/email_50px.png"))); // NOI18N
 
@@ -2417,9 +2696,9 @@ public class AdminDashboard extends javax.swing.JFrame {
 
         jLabel45.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/SplashIcon/edit_pro5_64px.png"))); // NOI18N
 
-        jLabel46.setText("Update contactnumber and email for better security");
         jLabel46.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
         jLabel46.setForeground(new java.awt.Color(121, 121, 121));
+        jLabel46.setText("Update contactnumber and email for better security");
 
         contact_number_label.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
         contact_number_label.setPlaceholder("Contact Number . . .");
@@ -2430,8 +2709,8 @@ public class AdminDashboard extends javax.swing.JFrame {
         jPanel15.setBackground(new java.awt.Color(255, 255, 255));
         jPanel15.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
-        account_name_label.setText("_AccountName_");
         account_name_label.setFont(new java.awt.Font("Segoe UI", 3, 18)); // NOI18N
+        account_name_label.setText("_AccountName_");
 
         javax.swing.GroupLayout jPanel15Layout = new javax.swing.GroupLayout(jPanel15);
         jPanel15.setLayout(jPanel15Layout);
@@ -2755,7 +3034,7 @@ public class AdminDashboard extends javax.swing.JFrame {
                 .addGroup(changepassword_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel50, javax.swing.GroupLayout.PREFERRED_SIZE, 292, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel51))
-                .addContainerGap(115, Short.MAX_VALUE))
+                .addContainerGap(68, Short.MAX_VALUE))
         );
         changepassword_panelLayout.setVerticalGroup(
             changepassword_panelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2813,6 +3092,8 @@ public class AdminDashboard extends javax.swing.JFrame {
         }
         String status = category_status.getSelectedItem().toString();
         String book_count = "0";
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Add",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
         try {
             pst = con.prepareStatement("Insert into Categories(Name,Status,Book_count)values(?,?,?)");
             pst.setString(1, name);
@@ -2846,6 +3127,8 @@ public class AdminDashboard extends javax.swing.JFrame {
             return;
         }    
         String status = category_status.getSelectedItem().toString();
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Update",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
         try {
             pst = con.prepareStatement("Update Categories set Name = ?, Status = ? where Category_ID = ?");
             pst.setString(1, name);
@@ -2873,6 +3156,8 @@ public class AdminDashboard extends javax.swing.JFrame {
         DefaultTableModel model = (DefaultTableModel)category_table.getModel();
         int selectIndex = category_table.getSelectedRow();
         String id = model.getValueAt(selectIndex, 0).toString();
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Delete",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
         try {
             PreparedStatement new_pst = con.prepareStatement("SELECT b.Author_ID, b.Publisher_ID, COUNT(*) as \"Count\" "
                     + "FROM books b JOIN authors a ON b.Author_ID = a.Author_ID "
@@ -2961,6 +3246,8 @@ public class AdminDashboard extends javax.swing.JFrame {
         String city = author_city.getText();
         String book_count = "0";
         if("".equals(name) || "".equals(city)) return;
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Add",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
         try {
             pst = con.prepareStatement("Insert into Authors(Name,City,Book_count)values(?,?,?)");
             pst.setString(1, name);
@@ -2993,6 +3280,8 @@ public class AdminDashboard extends javax.swing.JFrame {
             return;
         }    
         String city = author_city.getText();
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Update",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
         try {
             pst = con.prepareStatement("Update Authors set Name = ?, City = ? where Author_ID = ?");
             pst.setString(1, name);
@@ -3020,6 +3309,8 @@ public class AdminDashboard extends javax.swing.JFrame {
         DefaultTableModel model = (DefaultTableModel)author_table.getModel();
         int selectIndex = author_table.getSelectedRow();
         String id = model.getValueAt(selectIndex, 0).toString();
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Delete",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
         try {
             PreparedStatement new_pst = con.prepareStatement("SELECT b.Category_ID, b.Publisher_ID, COUNT(*) as \"Count\" "
                     + "FROM books b JOIN authors a ON b.Author_ID = a.Author_ID "
@@ -3077,6 +3368,8 @@ public class AdminDashboard extends javax.swing.JFrame {
         String address = publisher_address.getText();
         String book_count = "0";
         if("".equals(name) || "".equals(address)) return;
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Add",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
         try {
             pst = con.prepareStatement("Insert into Publishers(Name,Address,Book_count)values(?,?,?)");
             pst.setString(1, name);
@@ -3110,6 +3403,8 @@ public class AdminDashboard extends javax.swing.JFrame {
             return;
         }    
         String address = publisher_address.getText();
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Update",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
         try {
             pst = con.prepareStatement("Update Publishers set Name = ?, Address = ? where Publisher_ID = ?");
             pst.setString(1, name);
@@ -3137,6 +3432,8 @@ public class AdminDashboard extends javax.swing.JFrame {
         DefaultTableModel model = (DefaultTableModel)publisher_table.getModel();
         int selectIndex = publisher_table.getSelectedRow();
         String id = model.getValueAt(selectIndex, 0).toString();
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Delete",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
         try {
             PreparedStatement new_pst = con.prepareStatement("SELECT b.Author_ID, b.Category_ID, COUNT(*) as \"Count\" "
                     + "FROM books b JOIN authors a ON b.Author_ID = a.Author_ID "
@@ -3256,6 +3553,8 @@ public class AdminDashboard extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(this, "Quantity is invalid");
             return;
         }
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Add",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
         int category = ((CategoryItem)book_category.getSelectedItem()).getId();
         int author = ((AuthorItem)book_author.getSelectedItem()).getId();
         int publisher = ((PublisherItem)book_publisher.getSelectedItem()).getId();       
@@ -3301,7 +3600,9 @@ public class AdminDashboard extends javax.swing.JFrame {
         if("".equals(name)) {
             JOptionPane.showMessageDialog(this, "Missing information");
             return;
-        }    
+        }
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Update",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
         int category = ((CategoryItem)book_category.getSelectedItem()).getId();
         int author = ((AuthorItem)book_author.getSelectedItem()).getId();
         int publisher = ((PublisherItem)book_publisher.getSelectedItem()).getId();
@@ -3340,6 +3641,8 @@ public class AdminDashboard extends javax.swing.JFrame {
 
     private void book_deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_book_deleteButtonActionPerformed
         // TODO add your handling code here:
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Delete",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
         DefaultTableModel model = (DefaultTableModel)book_table.getModel();
         int selectIndex = book_table.getSelectedRow();
         String id = model.getValueAt(selectIndex, 0).toString();
@@ -3853,7 +4156,7 @@ public class AdminDashboard extends javax.swing.JFrame {
         Parent_panel.add(user_panel);
         Parent_panel.repaint();
         Parent_panel.revalidate();
-        Book_panelLoad();
+        User_panelLoad();
         TurnOffButtons();
         manage_users_button.setBackground(new Color(255,0,51));        
     }//GEN-LAST:event_manage_users_buttonActionPerformed
@@ -4018,6 +4321,147 @@ public class AdminDashboard extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_Submit_buttonActionPerformed
 
+    private void username_searchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_username_searchActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_username_searchActionPerformed
+
+    private void user_searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_user_searchButtonActionPerformed
+        // TODO add your handling code here:
+        String username = username_search.getText();
+        if(username.equals("")) return;
+        table_status.Previous_user_selected = NO_SELECTION;
+        try {
+            pst = con.prepareStatement("Select AccountName, Email, ContactNumber From Accounts Where AccountName = ?");
+            pst.setString(1, username);
+            rs = pst.executeQuery();
+            int columns = 3;
+            DefaultTableModel model = (DefaultTableModel)user_table.getModel();
+            model.setRowCount(0);
+            while(rs.next()){
+                Object[] obj = new Object[columns];
+                for(int i = 1 ; i <= columns ; i++){
+                    obj[i-1] = rs.getString(i);
+                }
+                model.addRow(obj);
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }//GEN-LAST:event_user_searchButtonActionPerformed
+
+    private void user_tableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_user_tableMouseClicked
+        // TODO add your handling code here:
+        DefaultTableModel model = (DefaultTableModel)user_table.getModel();
+        int clickedRow = user_table.rowAtPoint(evt.getPoint());
+        if(clickedRow == NO_SELECTION) return;
+        if(clickedRow == table_status.Previous_user_selected) {
+            table_status.Previous_user_selected = NO_SELECTION;
+            user_table.clearSelection();
+            user_updateButton.setEnabled(false);
+            user_deleteButton.setEnabled(false);
+            return;
+        }
+        table_status.Previous_user_selected = clickedRow;
+        int selectIndex = user_table.getSelectedRow();
+        String username = model.getValueAt(selectIndex, 0).toString();
+        String password = null, email = null, contact = null;
+        try {
+            pst = con.prepareStatement("Select PassWord, Email, ContactNumber From Accounts Where AccountName = ?");
+            pst.setString(1,username);
+            rs = pst.executeQuery();
+            while(rs.next()){
+                password = rs.getString("PassWord");
+                email = rs.getString("Email");
+                contact = rs.getString("ContactNumber");
+            }
+            user_name.setText(username);
+            user_password.setText(password);
+            user_email.setText(email);
+            user_contact.setText(contact);
+            user_updateButton.setEnabled(true);
+            user_deleteButton.setEnabled(true);
+            History_issueLoad(username);
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_user_tableMouseClicked
+
+    private void user_tableAncestorAdded(javax.swing.event.AncestorEvent evt) {//GEN-FIRST:event_user_tableAncestorAdded
+        // TODO add your handling code here:
+    }//GEN-LAST:event_user_tableAncestorAdded
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+        table_status.Previous_user_selected = NO_SELECTION;
+        User_TableLoad();
+    }//GEN-LAST:event_jButton3ActionPerformed
+
+    private void user_updateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_user_updateButtonActionPerformed
+        // TODO add your handling code here:
+        String username = user_name.getText();
+        String password = user_password.getText();
+        String email = user_email.getText();
+        String contact = user_contact.getText();
+        if( password.equals("") || email.equals("") || contact.equals("")) {
+            JOptionPane.showMessageDialog(this, "Missing information");
+            return;
+        }
+        int indexFirst = email.indexOf('@');
+        if (indexFirst == -1 || email.substring(indexFirst).equals("@gmail.com") == false || Character.isLetter(email.charAt(0)) == false || email.length() < 10) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid email address");
+            return;
+        }
+        if(!isValidNumberString(contact)) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid contact number");
+            return;
+        }
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Update",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
+        try {
+            pst = con.prepareStatement("UPDATE accounts Set PassWord = ?, Email = ?, ContactNumber = ? WHERE AccountName = ?");
+            pst.setString(1, password);
+            pst.setString(2, email);
+            pst.setString(3, contact);
+            pst.setString(4, username);
+            int k = pst.executeUpdate();            
+            if(k == 1){
+                JOptionPane.showMessageDialog(this, "Data updated");
+                User_TableLoad();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error");
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }//GEN-LAST:event_user_updateButtonActionPerformed
+
+    private void user_deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_user_deleteButtonActionPerformed
+        // TODO add your handling code here:
+        String username = user_name.getText();
+        int response = JOptionPane.showConfirmDialog(this, "Do you want to proceed?", "Confirm Delete",JOptionPane.YES_NO_OPTION, ERROR_MESSAGE);
+        if(response == JOptionPane.NO_OPTION || response == JOptionPane.CLOSED_OPTION) return;
+        try {
+            pst = con.prepareStatement("Delete from Accounts Where AccountName = ?");
+            pst.setString(1, username);
+            int k = pst.executeUpdate();
+            if(k == 1){
+                JOptionPane.showMessageDialog(this, "Data deleted");
+                user_name.setText("");
+                user_password.setText("");
+                user_email.setText("");
+                user_contact.setText("");
+                History_issueLoad("");
+                User_TableLoad();
+            } else {
+                JOptionPane.showMessageDialog(this, "Error");
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(AdminDashboard.class.getName()).log(Level.SEVERE, null, ex);
+        }         
+    }//GEN-LAST:event_user_deleteButtonActionPerformed
+
     /**
      * @param args the command line arguments
      */
@@ -4109,6 +4553,7 @@ public class AdminDashboard extends javax.swing.JFrame {
     private javax.swing.JButton editprofile_resetButton;
     private javax.swing.JButton editprofile_saveButton;
     private app.bolivia.swing.JCTextField email_label;
+    private rojeru_san.complementos.RSTableMetro history_user_table;
     private javax.swing.JButton home_page_button;
     private javax.swing.JPanel home_page_panel;
     private javax.swing.JPanel issue_panel;
@@ -4121,6 +4566,7 @@ public class AdminDashboard extends javax.swing.JFrame {
     private javax.swing.JLabel j;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -4189,6 +4635,12 @@ public class AdminDashboard extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel69;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel70;
+    private javax.swing.JLabel jLabel71;
+    private javax.swing.JLabel jLabel72;
+    private javax.swing.JLabel jLabel73;
+    private javax.swing.JLabel jLabel74;
+    private javax.swing.JLabel jLabel75;
+    private javax.swing.JLabel jLabel76;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
@@ -4199,6 +4651,7 @@ public class AdminDashboard extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel14;
     private javax.swing.JPanel jPanel15;
     private javax.swing.JPanel jPanel16;
+    private javax.swing.JPanel jPanel17;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
@@ -4210,7 +4663,9 @@ public class AdminDashboard extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
+    private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
+    private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JScrollPane jScrollPane8;
     private javax.swing.JScrollPane jScrollPane9;
@@ -4236,6 +4691,15 @@ public class AdminDashboard extends javax.swing.JFrame {
     private app.bolivia.swing.JCTextField txtpassword;
     private app.bolivia.swing.JCTextField txtpassword1;
     private app.bolivia.swing.JCTextField txtpassword2;
+    private javax.swing.JTextField user_contact;
+    private javax.swing.JButton user_deleteButton;
+    private javax.swing.JTextField user_email;
+    private javax.swing.JTextField user_name;
     private javax.swing.JPanel user_panel;
+    private javax.swing.JTextField user_password;
+    private javax.swing.JButton user_searchButton;
+    private rojeru_san.complementos.RSTableMetro user_table;
+    private javax.swing.JButton user_updateButton;
+    private app.bolivia.swing.JCTextField username_search;
     // End of variables declaration//GEN-END:variables
 }

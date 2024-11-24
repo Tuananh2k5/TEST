@@ -9,7 +9,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
@@ -19,9 +21,9 @@ import javax.swing.JOptionPane;
  * @author Admin
  */
 public class Login extends javax.swing.JFrame {
-
-    private List<String> UserNames = new ArrayList<String>();
-    private List<String> AdminNames = new ArrayList<String>();
+    private Set<String> AccountNames = new HashSet<>();
+//    private List<String> UserNames = new ArrayList<String>();
+//    private List<String> AdminNames = new ArrayList<String>();
     
     /**
      * Creates new form Login
@@ -50,7 +52,8 @@ public class Login extends javax.swing.JFrame {
             pst = con.prepareStatement("Select AccountName from Accounts where Role = \"admin\"");
             rs = pst.executeQuery();
             while (rs.next()) {
-                AdminNames.add(rs.getString("AccountName"));
+//                AdminNames.add(rs.getString("AccountName"));
+                AccountNames.add(rs.getString("AccountName"));
             }
         } catch (SQLException ex) {
             Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
@@ -59,7 +62,8 @@ public class Login extends javax.swing.JFrame {
             pst = con.prepareStatement("Select AccountName from Accounts where Role = \"user\"");
             rs = pst.executeQuery();
             while (rs.next()) {
-                UserNames.add(rs.getString("AccountName"));
+//                UserNames.add(rs.getString("AccountName"));
+                AccountNames.add(rs.getString("AccountName"));
             }
         } catch (SQLException ex) {
             Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
@@ -156,6 +160,8 @@ public class Login extends javax.swing.JFrame {
         login_button.setBackground(new java.awt.Color(255, 0, 0));
         login_button.setText("Login");
         login_button.setToolTipText("");
+        login_button.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        login_button.setFocusable(false);
         login_button.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         login_button.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -329,19 +335,24 @@ public class Login extends javax.swing.JFrame {
         // TODO add your handling code here:
         String Name = txtusername.getText();
         String PassWord = txtpassword.getText();
-        if (!UserNames.contains(Name) && !AdminNames.contains(Name)) {
+//        if (!UserNames.contains(Name) && !AdminNames.contains(Name)) {
+//            JOptionPane.showMessageDialog(this, "Username or Password is not correct");
+//            return;
+//        }
+        if(!AccountNames.contains(Name)) {
             JOptionPane.showMessageDialog(this, "Username or Password is not correct");
             return;
         }
         try {
-            pst = con.prepareStatement("Select * from Accounts Where AccountName = \"" + Name + "\"");
+            pst = con.prepareStatement("Select AccountName, PassWord, Role from Accounts Where AccountName = \"" + Name + "\"");
             rs = pst.executeQuery();
             rs.next();
             if (!PassWord.equals(rs.getString("PassWord"))) {
                 JOptionPane.showMessageDialog(this, "Username or Password is not correct");
                 return;
             }
-            if (UserNames.contains(Name)) {
+            String role = rs.getString("Role");
+            if (role.equalsIgnoreCase("user")) {
                 new UserDashboard(Name).setVisible(true);
             } else {
                 new AdminDashboard(Name).setVisible(true);
