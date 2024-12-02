@@ -1,41 +1,32 @@
-﻿\# LMS
+﻿# LMS
 
-Library management system project in Java
+Library Management System Project in Java
 
-#Note
+## Note
 
-Please open the libraryDB.txt file and execute the SQL commands in MySQL or phpMyAdmin prior to running the application.
+Please open the `libraryDB.txt` file and execute the SQL commands in MySQL or phpMyAdmin prior to running the application.
 
-#Default Account
+## Default Account
 
--Admin :
+### Admin:
+- **Username**: admin  
+- **Password**: admin
 
-Username : admin
+### User:
+1. **Username**: user  
+   **Password**: user
 
-Password: admin
+2. **Username**: Alexandre  
+   **Password**: BlueSky2024
 
--User:
+3. **Username**: Isabella  
+   **Password**: Summer123
 
-` `1. Username : user
+4. **Username**: Oliver  
+   **Password**: Winter456
 
-`    `Password : user
+5. **Username**: Sophie  
+   **Password**: GreenLeaf789
 
-` `2. Username : Alexandre
-
-`    `Password : BlueSky2024
-
-` `3. Username : Isabella
-
-`    `Password : Summer123
-
-` `4. Username : Oliver
-
-`    `Password : Winter456
-
-` `5. Username : Sophie
-
-`    `Password : GreenLeaf789
-
-` `6. Username : Emiliano
-
-`     `Password : OceanWave321
+6. **Username**: Emiliano  
+   **Password**: OceanWave321
