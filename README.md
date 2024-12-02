@@ -6,6 +6,8 @@ Library Management System Project in Java
 
 Please open the `libraryDB.txt` file and execute the SQL commands in MySQL or phpMyAdmin prior to running the application.
 
+It is recommended to update the account and password used to connect to your MySQL database in the Database class. The variables DB_Username and DB_PassWord represent the username and password, respectively. By default, these are set to "root" and an empty string ("").
+
 ## Default Account
 
 ### Admin:
